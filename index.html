@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>José Manosalvas</title>
+<meta name="description" content="José Manosalvas, designer-engineer in Switzerland. Say hello at hello@josemanosalvas.ch.">
+<meta property="og:title" content="José Manosalvas">
+<meta property="og:description" content="Designer-engineer in Switzerland.">
+<meta property="og:url" content="https://josemanosalvas.ch/">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>
+  /* data-mode on <html> overrides the OS scheme; when absent, the page
+     follows prefers-color-scheme. Runs before first paint. */
+  (() => {
+    try {
+      const m = localStorage.getItem('mitad-mode');
+      if (m === 'light' || m === 'dark') document.documentElement.dataset.mode = m;
+    } catch (e) { /* storage blocked: follow the OS */ }
+  })();
+</script>
+<link rel="stylesheet" href="css/mitad.css">
+<style>
+  /* site-only, unlayered — everything else is Mitad */
+  .masthead {
+    padding-top: var(--s-18);
+    margin-bottom: var(--s-12);
+  }
+
+  .masthead-name {
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  /* The greeting line is one whole leading tall and clips its own word, so
+     the slide happens inside the line box and nothing below it moves. */
+  .greeting {
+    display: block;
+    overflow: hidden;
+  }
+
+  .greeting-word {
+    display: inline-block;
+  }
+
+  .greeting-word.leave {
+    animation: greeting-leave 280ms cubic-bezier(.5, 0, .75, 0) forwards;
+  }
+
+  .greeting-word.enter {
+    animation: greeting-enter 420ms cubic-bezier(.2, .8, .2, 1) both;
+  }
+
+  @keyframes greeting-leave { to { transform: translateY(-100%); } }
+  @keyframes greeting-enter { from { transform: translateY(100%); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .greeting-word.leave,
+    .greeting-word.enter {
+      animation: none;
+    }
+  }
+
+  /* The language readout: four instrument labels, the one being spoken lit. */
+  .languages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--s-6);
+    margin: var(--s-6) 0 var(--s-12);
+  }
+
+  .languages button {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .languages button[aria-pressed="true"] {
+    color: var(--c-accent);
+  }
+
+  .languages button:hover {
+    color: var(--c-ink);
+  }
+
+  .languages button[aria-pressed="true"]:hover {
+    color: var(--c-accent);
+  }
+
+  section {
+    margin-bottom: var(--s-12);
+  }
+
+  .contact-row {
+    display: flex;
+    gap: 0 var(--s-6);
+    flex-wrap: wrap;
+  }
+
+  .landing-footer {
+    padding-bottom: var(--s-12);
+  }
+</style>
+</head>
+<body>
+<div class="doc-bar"></div>
+<div class="page">
+  <header class="doc-header mt-line">
+    <div class="doc-field">
+      <span class="label">Document</span>
+      <span class="doc-value">JMS-0001</span>
+    </div>
+    <div class="doc-field">
+      <span class="label">Revision</span>
+      <span class="doc-value">A</span>
+    </div>
+    <div class="doc-field">
+      <span class="label">Date</span>
+      <span class="doc-value">2026-11-06</span>
+    </div>
+    <div class="doc-field doc-field-end">
+      <span class="label">Latitude</span>
+      <span class="doc-value">0°00′00″</span>
+    </div>
+  </header>
+
+  <main>
+  <header class="masthead">
+    <p class="label mb-0">Latitude 0°00′00″ · based in Switzerland</p>
+    <h1 class="masthead-name display-9">
+      <span class="greeting"><span class="greeting-word" lang="es">Hola,</span></span>
+      I’m José.
+    </h1>
+    <div class="languages" role="group" aria-label="Say hello in">
+      <button type="button" class="label" data-i="0" aria-pressed="true" lang="es">Español</button>
+      <button type="button" class="label" data-i="1" aria-pressed="false" lang="fr">Français</button>
+      <button type="button" class="label" data-i="2" aria-pressed="false">English</button>
+      <button type="button" class="label" data-i="3" aria-pressed="false"><span lang="de">Deutsch</span> (learning)</button>
+    </div>
+    <div class="grid">
+      <div class="c-4">
+        <p>I’m a designer-engineer living in Switzerland, mostly working on
+        design systems, document tooling and the web platform. These days I
+        build alongside AI coding agents.</p>
+        <p class="mb-0">I like taking things apart to see how they work, down
+        to the memory timings on my own computer.</p>
+      </div>
+    </div>
+    <hr class="rule mb-0">
+  </header>
+
+  <section class="grid">
+    <div class="c-4">
+      <h2 class="mt-0">Things I’ve made lately</h2>
+      <article class="index-entry">
+        <p class="kicker">
+          <span class="label ink-accent">System</span>
+          <span class="label">CSS · Print</span>
+        </p>
+        <h3>Mitad, the design system this page is set in</h3>
+        <p>Swiss grid discipline, a strict 24px vertical rhythm, and one
+        stylesheet for the screen and A4 paper.</p>
+      </article>
+      <article class="index-entry">
+        <p class="kicker">
+          <span class="label ink-accent">Tool</span>
+          <span class="label">Python · Linux</span>
+        </p>
+        <h3><a href="https://github.com/josemanosalvas/ctune">ctune</a></h3>
+        <p>Lets an AI agent tune RAM, CPU and GPU settings on Linux, one
+        measured change at a time.</p>
+      </article>
+      <article class="index-entry">
+        <p class="kicker">
+          <span class="label ink-accent">Library</span>
+          <span class="label">Rust · WebAssembly</span>
+        </p>
+        <h3><a href="https://github.com/josemanosalvas/groq-minifier">groq-minifier</a></h3>
+        <p>Strips comments and whitespace from GROQ queries without changing
+        what they mean.</p>
+      </article>
+      <article class="index-entry">
+        <p class="kicker">
+          <span class="label ink-accent">Template</span>
+          <span class="label">Next.js · Sanity</span>
+        </p>
+        <h3><a href="https://github.com/josemanosalvas/sanity-forge">Sanity Forge</a></h3>
+        <p>Several websites from one codebase and one content dataset.</p>
+      </article>
+      <article class="index-entry">
+        <p class="kicker">
+          <span class="label ink-accent">Library</span>
+          <span class="label">TypeScript · Sanity</span>
+        </p>
+        <h3><a href="https://github.com/josemanosalvas/sanity-jsonschema-forms">sanity-jsonschema-forms</a></h3>
+        <p>Turns forms built in Sanity into JSON Schema, so one definition
+        drives both the form and its validation.</p>
+      </article>
+    </div>
+    <div class="c-2">
+      <h2 class="mt-0">Say hello</h2>
+      <p>
+        <a href="mailto:hello@josemanosalvas.ch">hello@josemanosalvas.ch</a>
+      </p>
+      <h2>Elsewhere</h2>
+      <p class="mb-0"><a href="https://github.com/josemanosalvas">GitHub</a></p>
+    </div>
+  </section>
+  </main>
+
+  <footer class="landing-footer">
+    <hr class="rule">
+    <div class="contact-row">
+      <span class="label">José Manosalvas</span>
+      <span class="label">josemanosalvas.ch</span>
+      <span class="label tnum">0°00′00″ · −78°27′21″</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+  (() => {
+    const greetings = [
+      { word: 'Hola,', lang: 'es' },
+      { word: 'Salut,', lang: 'fr' },
+      { word: 'Hi,', lang: 'en' },
+      { word: 'Salü,', lang: 'gsw' },
+    ];
+    const heading = document.querySelector('.masthead-name');
+    const word = heading.querySelector('.greeting-word');
+    const buttons = [...document.querySelectorAll('.languages button')];
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+    let current = 0;
+    let timer = null;
+    let chosen = false;   // once a reader picks a language, the rotation stops
+    let busy = false;
+
+    function paint(i) {
+      word.textContent = greetings[i].word;
+      word.lang = greetings[i].lang;
+      buttons.forEach((b, n) => b.setAttribute('aria-pressed', String(n === i)));
+    }
+
+    function go(i) {
+      if (i === current || busy) return;
+      current = i;
+      if (reduce.matches) { paint(i); return; }
+      busy = true;
+      word.className = 'greeting-word leave';
+      setTimeout(() => {
+        paint(i);
+        word.className = 'greeting-word enter';
+        setTimeout(() => { word.className = 'greeting-word'; busy = false; }, 420);
+      }, 280);
+    }
+
+    function start() {
+      if (timer || chosen || reduce.matches || document.hidden) return;
+      timer = setInterval(() => go((current + 1) % greetings.length), 2800);
+    }
+
+    function stop() {
+      clearInterval(timer);
+      timer = null;
+    }
+
+    buttons.forEach((b) =>
+      b.addEventListener('click', () => {
+        chosen = true;
+        stop();
+        go(Number(b.dataset.i));
+      })
+    );
+    heading.addEventListener('mouseenter', stop);
+    heading.addEventListener('mouseleave', start);
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+
+    start();
+  })();
+</script>
+</body>
+</html>

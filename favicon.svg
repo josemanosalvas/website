@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Mitad's doc-bar: the flag as a strip, 4/2/2 -->
+  <rect width="32" height="32" fill="#F5F3EC"/>
+  <rect y="4" width="32" height="12" fill="#F2B705"/>
+  <rect y="16" width="32" height="6" fill="#0C4CA8"/>
+  <rect y="22" width="32" height="6" fill="#D91E36"/>
+</svg>
