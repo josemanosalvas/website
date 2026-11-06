@@ -2,17 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>José Manosalvas</title>
-<meta name="description" content="José Manosalvas, Switzerland. Say hello at hello@josemanosalvas.ch.">
+<meta name="description" content="Hola, I’m José. Say hello at hello@josemanosalvas.ch.">
 <meta property="og:title" content="José Manosalvas">
 <meta property="og:description" content="Say hello at hello@josemanosalvas.ch.">
 <meta property="og:url" content="https://josemanosalvas.ch/">
 <meta property="og:type" content="website">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script>
-  /* data-mode on <html> overrides the OS scheme; when absent, the page
-     follows prefers-color-scheme. Runs before first paint. */
   (() => {
     try {
       const m = localStorage.getItem('mitad-mode');
@@ -22,52 +20,37 @@
 </script>
 <link rel="stylesheet" href="css/mitad.css">
 <style>
-  /* site-only, unlayered — everything else is Mitad */
-  .masthead {
-    padding-top: var(--s-24);
-    margin-bottom: var(--s-24);
+  /* The page is the equator: paper above latitude 0°00′00″, the flag below.
+     Mitad supplies the voices and the colours; this sheet is a poster. */
+
+  :root {
+    --gutter: clamp(1.5rem, 5vw, 4.5rem);
+    --hello: min(33vw, 40svh, 20rem);   /* "Salut" must fit the width */
+    --band: clamp(0.75rem, 1.6svh, 1.25rem);
   }
 
-  .masthead-name {
-    letter-spacing: -0.02em;
-    margin: 0;
+  html, body { height: 100%; }
+
+  body {
+    display: grid;
+    grid-template-rows: minmax(16rem, 1fr) minmax(16rem, 1fr);
+    min-height: 100svh;
   }
 
-  /* The greeting line is one whole leading tall and clips its own word, so
-     the slide happens inside the line box and nothing below it moves. */
-  .greeting {
-    display: block;
-    overflow: hidden;
+  /* ---------- north: paper ---------- */
+  .north {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--gutter) var(--gutter) 0;
+    padding-top: max(var(--gutter), env(safe-area-inset-top));
   }
 
-  .greeting-word {
-    display: inline-block;
-  }
-
-  .greeting-word.leave {
-    animation: greeting-leave 280ms cubic-bezier(.5, 0, .75, 0) forwards;
-  }
-
-  .greeting-word.enter {
-    animation: greeting-enter 420ms cubic-bezier(.2, .8, .2, 1) both;
-  }
-
-  @keyframes greeting-leave { to { transform: translateY(-100%); } }
-  @keyframes greeting-enter { from { transform: translateY(100%); } }
-
-  @media (prefers-reduced-motion: reduce) {
-    .greeting-word.leave,
-    .greeting-word.enter {
-      animation: none;
-    }
-  }
-
-  /* The language readout: four instrument labels, the one being spoken lit. */
   .languages {
     display: flex;
     flex-wrap: wrap;
     gap: 0 var(--s-6);
-    margin: var(--s-6) 0 var(--s-12);
+    margin: 0;
   }
 
   .languages button {
@@ -75,75 +58,144 @@
     border: 0;
     padding: 0;
     cursor: pointer;
+    transition: color 200ms;
   }
 
-  .languages button[aria-pressed="true"] {
-    color: var(--c-accent);
+  @media (prefers-reduced-motion: reduce) {
+    .languages button { transition: none; }
   }
 
-  .languages button:hover {
-    color: var(--c-ink);
+  .languages button:hover { color: var(--c-ink); }
+  .languages button[aria-pressed="true"] { color: var(--c-accent); }
+
+  .languages small {
+    font-size: inherit;
+    opacity: 0.6;
   }
 
-  .languages button[aria-pressed="true"]:hover {
-    color: var(--c-accent);
+  /* The horizon. The word's baseline sits on the band and anything below
+     the line is cut off, so greetings rise out of it and set back into it. */
+  h1 {
+    margin: 0;
+    font-family: var(--f-sans);
+    font-size: var(--hello);
+    line-height: 1;
+    letter-spacing: -0.045em;
+    margin-left: -0.06em;            /* optical: pull the stem to the margin */
+    height: 0.8em;                   /* ascent only: baseline = bottom edge */
+    clip-path: inset(-1em -1em 0 -1em);
+    white-space: nowrap;
   }
 
-  .contact-row {
+  .word {
+    display: inline-block;
+    font-weight: 800;
+  }
+
+  .word.set  { animation: set 520ms cubic-bezier(.55, 0, .8, .2) forwards; }
+  .word.rise { animation: rise 900ms cubic-bezier(.16, .84, .24, 1) both; }
+
+  @keyframes set {
+    to { transform: translateY(105%); font-weight: 300; }
+  }
+  @keyframes rise {
+    from { transform: translateY(105%); font-weight: 200; }
+    55%  { font-weight: 500; }
+    to   { transform: translateY(0); font-weight: 800; }
+  }
+
+  /* ---------- south: the flag ---------- */
+  .south {
+    position: relative;
     display: flex;
-    gap: 0 var(--s-6);
-    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--c-accent);
+    color: var(--c-bg);
+    border-top: var(--band) solid #F2B705;          /* Sol */
+    border-bottom: calc(var(--band) / 2) solid #D91E36;  /* Ají */
+    padding: var(--s-6) var(--gutter) var(--gutter);
+    padding-bottom: max(var(--gutter), env(safe-area-inset-bottom));
   }
 
-  .landing-footer {
-    padding-bottom: var(--s-12);
+  .name {
+    margin: 0 0 var(--s-3);
+    font-family: var(--f-sans);
+    font-weight: 300;
+    font-size: clamp(2rem, 7vw, 4.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .south a {
+    color: inherit;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
+  .south a:hover { text-decoration-thickness: 2px; }
+
+  .south :focus-visible { outline-color: var(--c-bg); }
+
+  .hello {
+    margin: 0;
+    font-family: var(--f-serif);
+    font-style: italic;
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .coords {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--s-6);
+    margin: 0;
+  }
+
+  .coords .label { color: inherit; opacity: 0.75; }
+  .coords a.label { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .word.set, .word.rise { animation: none; }
   }
 </style>
 </head>
 <body>
-<div class="doc-bar"></div>
-<div class="page">
-  <main>
-  <header class="masthead">
-    <h1 class="masthead-name display-9">
-      <span class="greeting"><span class="greeting-word" lang="es">Hola,</span></span>
-      I’m José.
-    </h1>
+  <header class="north">
     <div class="languages" role="group" aria-label="Say hello in">
       <button type="button" class="label" data-i="0" aria-pressed="true" lang="es">Español</button>
       <button type="button" class="label" data-i="1" aria-pressed="false" lang="fr">Français</button>
       <button type="button" class="label" data-i="2" aria-pressed="false">English</button>
-      <button type="button" class="label" data-i="3" aria-pressed="false"><span lang="de">Deutsch</span> (learning)</button>
+      <button type="button" class="label" data-i="3" aria-pressed="false"><span lang="de">Deutsch</span> <small>learning</small></button>
     </div>
-    <p class="mb-0"><a href="mailto:hello@josemanosalvas.ch">hello@josemanosalvas.ch</a></p>
+    <h1><span class="word" lang="es">Hola</span><span class="visually-hidden">, I’m José.</span></h1>
   </header>
-  </main>
 
-  <footer class="landing-footer">
-    <hr class="rule">
-    <div class="contact-row">
-      <span class="label">0°00′00″ · Switzerland</span>
-      <a class="label" href="https://github.com/josemanosalvas">GitHub</a>
+  <main class="south">
+    <div>
+      <p class="name" aria-hidden="true">I’m José.</p>
+      <p class="hello"><a href="mailto:hello@josemanosalvas.ch">hello@josemanosalvas.ch</a></p>
     </div>
-  </footer>
-</div>
+    <p class="coords">
+        <span class="label tnum">0°00′00″ → Switzerland</span>
+        <a class="label" href="https://github.com/josemanosalvas">GitHub</a>
+    </p>
+  </main>
 
 <script>
   (() => {
     const greetings = [
-      { word: 'Hola,', lang: 'es' },
-      { word: 'Salut,', lang: 'fr' },
-      { word: 'Hi,', lang: 'en' },
-      { word: 'Salü,', lang: 'gsw' },
+      { word: 'Hola', lang: 'es' },
+      { word: 'Salut', lang: 'fr' },
+      { word: 'Hi', lang: 'en' },
+      { word: 'Salü', lang: 'gsw' },
     ];
-    const heading = document.querySelector('.masthead-name');
-    const word = heading.querySelector('.greeting-word');
+    const word = document.querySelector('.word');
+    const heading = document.querySelector('h1');
     const buttons = [...document.querySelectorAll('.languages button')];
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-    let current = 0;
-    let timer = null;
-    let chosen = false;   // once a reader picks a language, the rotation stops
-    let busy = false;
+    let current = 0, timer = null, chosen = false, busy = false;
 
     function paint(i) {
       word.textContent = greetings[i].word;
@@ -156,36 +208,33 @@
       current = i;
       if (reduce.matches) { paint(i); return; }
       busy = true;
-      word.className = 'greeting-word leave';
+      word.className = 'word set';
       setTimeout(() => {
         paint(i);
-        word.className = 'greeting-word enter';
-        setTimeout(() => { word.className = 'greeting-word'; busy = false; }, 420);
-      }, 280);
+        word.className = 'word rise';
+        setTimeout(() => { word.className = 'word'; busy = false; }, 900);
+      }, 520);
     }
 
     function start() {
       if (timer || chosen || reduce.matches || document.hidden) return;
-      timer = setInterval(() => go((current + 1) % greetings.length), 2800);
+      timer = setInterval(() => go((current + 1) % greetings.length), 3200);
     }
+    function stop() { clearInterval(timer); timer = null; }
 
-    function stop() {
-      clearInterval(timer);
-      timer = null;
-    }
-
-    buttons.forEach((b) =>
-      b.addEventListener('click', () => {
-        chosen = true;
-        stop();
-        go(Number(b.dataset.i));
-      })
-    );
+    buttons.forEach((b) => b.addEventListener('click', () => {
+      chosen = true; stop(); go(Number(b.dataset.i));
+    }));
     heading.addEventListener('mouseenter', stop);
     heading.addEventListener('mouseleave', start);
     document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
 
-    start();
+    // First light: the opening greeting rises once on load.
+    if (!reduce.matches) {
+      word.className = 'word rise';
+      busy = true;
+      setTimeout(() => { word.className = 'word'; busy = false; start(); }, 900);
+    }
   })();
 </script>
 </body>
