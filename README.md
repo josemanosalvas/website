@@ -1,50 +1,40 @@
 # josemanosalvas.ch
 
-The homepage at [josemanosalvas.ch](https://josemanosalvas.ch). One static page, set in
-Mitad, my personal design system.
+The homepage at [josemanosalvas.ch](https://josemanosalvas.ch). Set in Mitad, my personal
+design system: its faces and colours, with a composition of its own.
 
 ## What's here
 
 ```
-index.html        the page (site-only styles and the greeting script are inline)
-favicon.svg       a horizon line
-css/mitad.css     copy of design-system/dist/mitad.css
-fonts/            Archivo, Literata, B612 Mono (woff2) + OFL.txt
+index.html               the whole site: markup, CSS, script, fonts and favicon inline
+OFL.txt                  licence for the embedded fonts
+tools/inline-fonts.py    subsets the fonts to the page's text and embeds them
 ```
 
-No build step and no external requests: fonts are self-hosted, so the page loads nothing
-from Google or any other third party.
+A visit is one request. The CSS is only what the page uses, and the three fonts are subset to
+the characters they draw (about 17 KB in total) and embedded as base64.
 
-## Updating Mitad
+## Changing the text
 
-`css/mitad.css` and `fonts/` are copied from the design-system repo. After changing Mitad:
+The fonts only contain the characters on the page. After editing the greetings, the name,
+the email or the GitHub label, update the `text` entries in `tools/inline-fonts.py` to match, then
+regenerate the fonts from the Mitad repo checked out next to this one:
 
 ```sh
-cp ../design-system/dist/mitad.css css/mitad.css
-cp ../design-system/fonts/*.woff2 ../design-system/fonts/OFL.txt fonts/
+pip install fonttools brotli
+python3 tools/inline-fonts.py              # or pass the path to design-system/fonts
 ```
 
-`mitad.css` loads fonts from `../fonts/`, so keep `css/` and `fonts/` side by side.
+A character that isn't in the subset falls back to Helvetica, Georgia or Courier.
 
 ## Previewing locally
 
-Fonts don't load reliably over `file://`, so serve the folder:
-
-```sh
-python3 -m http.server 8000   # then open http://localhost:8000
-```
+Open `index.html` in a browser. Nothing else needs to load.
 
 ## Deploying to Infomaniak
 
-The site is hosted on Infomaniak's free Starter web hosting (10 MB). Upload these files to
-the web root, keeping the folder structure:
-
-- `index.html`, `favicon.svg`
-- `css/`
-- `fonts/`
-
-Use Web FTP in the Infomaniak Manager or any FTP client. The repo's `README.md` doesn't need
-to go up.
+The site is hosted on Infomaniak's free Starter web hosting. Upload `index.html` and
+`OFL.txt` to the web root using Web FTP in the Infomaniak Manager or any FTP client.
 
 The Starter plan has no IPv6, so make sure the domain has no AAAA record, or SSL may not
 activate.
@@ -52,4 +42,4 @@ activate.
 ## Fonts
 
 Archivo, Literata and B612 Mono are licensed under the SIL Open Font License 1.1, see
-`fonts/OFL.txt`.
+`OFL.txt`.
