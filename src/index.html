@@ -463,10 +463,18 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
         g.emoji = look.width && g.poses ? Array.from({ length: g.poses }, (_, k) => {
           const cell = document.createElement('canvas'), w = look.width / g.poses;
           cell.width = w; cell.height = look.height;
-          cell.getContext('2d').drawImage(look, k * w, 0, w, look.height, 0, 0, w, look.height);
+          cell.getContext('2d', { willReadFrequently: true }).drawImage(look, k * w, 0, w, look.height, 0, 0, w, look.height);
           return sprite(cell, null, true);
         }) : [sprite(look)];
         g.banner = sprite(g.flag, g.rects);
+      }
+      // Every glyph the changes will show is measured now, one at a time, so that no change has
+      // to stop and measure as it starts.
+      for (const g of greetings) {
+        for (const steps of g.steps) {
+          for (const [, , glyph, faces] of score(g, steps)) { await breath(); measure([[glyph, faces]]); }
+        }
+        for (const c of g.word) { await breath(); measure([[c, '']]); }
       }
       stage.hidden = true;
       stage.setAttribute('aria-hidden', 'true');
