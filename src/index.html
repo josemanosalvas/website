@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>José Manosalvas</title>
+<meta name="description" content="Hola, I’m José. Say hello at hello@josemanosalvas.ch.">
+<meta property="og:title" content="José Manosalvas">
+<meta property="og:description" content="Say hello at hello@josemanosalvas.ch.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F5F3EC'/%3E%3Cpath d='M6 22h20' stroke='%23191813' stroke-width='4'/%3E%3C/svg%3E">
+<style>
+  /* Everything this page needs, and nothing else. Faces and colours are
+     Mitad's; the fonts are subset to the characters on the page and
+     embedded by tools/build.py, which also minifies this file into
+     ../index.html, the one that gets uploaded.
+     Archivo, Literata and B612 Mono: SIL Open Font License 1.1, see OFL.txt. */
+
+  /* fonts:start */
+  /* fonts:end */
+
+  :root {
+    --bg: #F5F3EC;            /* Mitad Papel */
+    --ink: #191813;           /* Mitad Tinta */
+    --focus: #0C4CA8;         /* Mitad Azul */
+    --sans: 'Archivo', 'Helvetica Neue', 'Arial', sans-serif;
+    --serif: 'Literata', 'Georgia', serif;
+    --mono: 'B612 Mono', 'Courier New', monospace;
+    --gutter: clamp(1.5rem, 5vw, 4.5rem);
+    --hello: min(33vw, 40svh, 20rem);   /* "Salut" must fit the width */
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161511;
+      --ink: #EBE7DC;
+      --focus: #56B8DF;       /* Mitad Guayas */
+      color-scheme: dark;
+    }
+  }
+
+  *, ::before, ::after { box-sizing: border-box; }
+  * { margin: 0; }
+
+  html {
+    height: 100%;
+    background: var(--bg);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    font-synthesis: none;
+  }
+
+  body {
+    display: grid;
+    grid-template-rows: minmax(16rem, 1fr) minmax(16rem, 1fr);
+    height: 100%;
+    min-height: 100svh;
+    font: 1.125rem/1.5rem var(--sans);
+    font-kerning: normal;
+    color: var(--ink);
+    background: var(--bg);
+  }
+
+  ::selection { background: #F2B705; color: #191813; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* ---------- above the horizon ---------- */
+  .north {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: var(--gutter) var(--gutter) 0;
+    padding-top: max(var(--gutter), env(safe-area-inset-top));
+  }
+
+  /* The word's baseline is the horizon and anything below it is cut, so
+     each greeting rises out of it and sets back into it. */
+  h1 {
+    font-size: var(--hello);
+    line-height: 1;
+    letter-spacing: -0.045em;
+    margin-left: -0.06em;            /* optical: pull the stem to the margin */
+    height: 0.8em;                   /* ascent only: baseline = bottom edge */
+    clip-path: inset(-1em -1em -0.025em -1em);   /* keep round overshoot whole */
+    white-space: nowrap;
+  }
+
+  .word {
+    display: inline-block;
+    font-weight: 800;
+  }
+
+  .word.set  { animation: set 520ms cubic-bezier(.55, 0, .8, .2) forwards; }
+  .word.rise { animation: rise 900ms cubic-bezier(.16, .84, .24, 1) both; }
+
+  @keyframes set {
+    to { transform: translateY(105%); font-weight: 300; }
+  }
+  @keyframes rise {
+    from { transform: translateY(105%); font-weight: 200; }
+    55%  { font-weight: 500; }
+    to   { transform: translateY(0); font-weight: 800; }
+  }
+
+  /* ---------- below the horizon ---------- */
+  .south {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem var(--gutter) var(--gutter);
+    padding-bottom: max(var(--gutter), env(safe-area-inset-bottom));
+  }
+
+  .name {
+    margin-bottom: 0.75rem;
+    font-weight: 300;
+    font-size: clamp(2rem, 7vw, 4.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  a {
+    color: inherit;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
+  a:hover { text-decoration-thickness: 2px; }
+
+  .hello {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .elsewhere { text-align: right; }
+
+  .elsewhere a {
+    font: 0.75rem/1.5rem var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .word.set, .word.rise { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <header class="north">
+    <h1><span class="word" lang="es">Hola</span><span class="visually-hidden">, I’m José.</span></h1>
+  </header>
+
+  <main class="south">
+    <div>
+      <p class="name" aria-hidden="true">I’m José.</p>
+      <p class="hello"><a href="mailto:hello@josemanosalvas.ch">hello@josemanosalvas.ch</a></p>
+    </div>
+    <p class="elsewhere"><a href="https://github.com/josemanosalvas">GitHub</a></p>
+  </main>
+
+<script>
+  (() => {
+    const greetings = [
+      { word: 'Hola', lang: 'es' },
+      { word: 'Salut', lang: 'fr' },
+      { word: 'Hi', lang: 'en' },
+      { word: 'Salü', lang: 'gsw' },
+    ];
+    const word = document.querySelector('.word');
+    const heading = document.querySelector('h1');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+    let current = 0, timer = null, busy = false;
+
+    function go(i) {
+      if (busy) return;
+      current = i;
+      busy = true;
+      word.className = 'word set';
+      setTimeout(() => {
+        word.textContent = greetings[i].word;
+        word.lang = greetings[i].lang;
+        word.className = 'word rise';
+        setTimeout(() => { word.className = 'word'; busy = false; }, 900);
+      }, 520);
+    }
+
+    function start() {
+      if (timer || reduce.matches || document.hidden) return;
+      timer = setInterval(() => go((current + 1) % greetings.length), 3200);
+    }
+    function stop() { clearInterval(timer); timer = null; }
+
+    heading.addEventListener('mouseenter', stop);
+    heading.addEventListener('mouseleave', start);
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+
+    // First light: the opening greeting rises once on load.
+    if (!reduce.matches) {
+      word.className = 'word rise';
+      busy = true;
+      setTimeout(() => { word.className = 'word'; busy = false; start(); }, 900);
+    }
+  })();
+</script>
+</body>
+</html>

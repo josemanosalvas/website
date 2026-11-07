@@ -6,30 +6,30 @@ design system: its faces and colours, with a composition of its own.
 ## What's here
 
 ```
-index.html               the whole site: markup, CSS, script, fonts and favicon inline
-OFL.txt                  licence for the embedded fonts
-tools/inline-fonts.py    subsets the fonts to the page's text and embeds them
+index.html        built and minified: the only file visitors load (17 KB, 12 KB gzipped)
+src/index.html    the readable source
+tools/build.py    builds index.html from src/
+OFL.txt           licence for the embedded fonts
 ```
 
-A visit is one request. The CSS is only what the page uses, and the three fonts are subset to
-the characters they draw (about 17 KB in total) and embedded as base64.
+A visit is one request. Markup, CSS, script, favicon and fonts are all inside `index.html`.
+The fonts are subset to the characters they draw and embedded as base64.
 
-## Changing the text
+## Editing
 
-The fonts only contain the characters on the page. After editing the greetings, the name,
-the email or the GitHub label, update the `text` entries in `tools/inline-fonts.py` to match, then
-regenerate the fonts from the Mitad repo checked out next to this one:
+Edit `src/index.html`, never `index.html`. Then build, with the Mitad repo checked out next
+to this one:
 
 ```sh
-pip install fonttools brotli
-python3 tools/inline-fonts.py              # or pass the path to design-system/fonts
+pip install fonttools brotli minify-html     # Node is also needed, for esbuild
+python3 tools/build.py                       # or pass the path to design-system/fonts
 ```
 
-A character that isn't in the subset falls back to Helvetica, Georgia or Courier.
+The fonts only contain the characters on the page. If you change the greetings, the name,
+the email or the GitHub label, update the `text` entries in `tools/build.py` first, or new
+letters will fall back to Helvetica, Georgia or Courier.
 
-## Previewing locally
-
-Open `index.html` in a browser. Nothing else needs to load.
+The build is deterministic: the same source gives the same bytes.
 
 ## Deploying to Infomaniak
 
