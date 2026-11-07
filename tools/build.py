@@ -39,7 +39,7 @@ FONTS = [
         "pin": None,
         "weight": "100 900",
         "style": "normal",
-        "text": "Hola, I’m José.",  # greeting, name, hidden heading
+        "text": "Hola Salü, I’m José. */{}",  # greetings, name, hidden heading, intro
     },
     {
         "family": "Literata",
@@ -47,7 +47,7 @@ FONTS = [
         "pin": {"wght": 400},
         "weight": "400",
         "style": "italic",
-        "text": "hello@josemanosalvas.ch",
+        "text": "hello@josemanosalvas.ch H",  # email, intro
     },
     {
         "family": "B612 Mono",
@@ -55,7 +55,7 @@ FONTS = [
         "pin": None,
         "weight": "400",
         "style": "normal",
-        "text": "GITHUB",  # uppercased in CSS
+        "text": "GITHUB ol0",  # uppercased in CSS, intro
     },
 ]
 

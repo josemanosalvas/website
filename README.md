@@ -6,7 +6,7 @@ design system: its faces and colours, with a composition of its own.
 ## What's here
 
 ```
-index.html        built and minified: the only file visitors load (17 KB, 12 KB gzipped)
+index.html        built and minified: the only file visitors load (25 KB, 16 KB gzipped)
 src/index.html    the readable source
 tools/build.py    builds index.html from src/
 OFL.txt           licence for the embedded fonts
@@ -25,11 +25,29 @@ pip install fonttools brotli minify-html     # Node is also needed, for esbuild
 python3 tools/build.py                       # or pass the path to design-system/fonts
 ```
 
-The fonts only contain the characters on the page. If you change the greeting, the name,
-the email or the GitHub label, update the `text` entries in `tools/build.py` first, or new
-letters will fall back to Helvetica, Georgia or Courier.
+The fonts only contain the characters on the page. If you change the greetings, the name,
+the email or the GitHub label, or the glyphs the greeting cuts through, update the `text` entries
+in `tools/build.py` first, or new letters will fall back to Helvetica, Georgia or Courier.
 
 The build is deterministic: the same source gives the same bytes.
+
+## The greeting
+
+Only the greeting moves, alternating between Hola and Salü. On load, Hola's letters cut through
+Mitad's three faces, then each greeting breaks up in place and the other resolves out of symbols
+and stickers. Its last letter lands as a sticker for a moment. When the word is whole, its flag
+hops on top to say where the word is from, and leaves about a second later while the word stays.
+What goes with each word is the `greetings` list at the foot of `src/index.html`, and the first
+greeting's timing is the `intro` score beside it.
+
+Everything keeps to one 90 ms beat and one 36-beat bar, whatever the word's length. While a word
+is in pieces each letter holds its resting width, so only the last letter's mark can add to the
+title, and the widest state stays inside the page margin down to 320 px. Anything wider than a
+letter needs room checked first, and `l` only takes the slim symbols.
+
+Flags are the visitor's own emoji, so they look different on each system, and Chrome and Edge on
+Windows show letters instead (EC, CH). Everything else is inline SVG in the sprite at the top of
+`<body>`. Without JS or with reduced motion, the page simply stands still.
 
 ## Deploying to Infomaniak
 

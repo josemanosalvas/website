@@ -22,11 +22,14 @@
     --bg: #F5F3EC;            /* Mitad Papel */
     --ink: #191813;           /* Mitad Tinta */
     --focus: #0C4CA8;         /* Mitad Azul */
+    --aji: #D91E36;           /* accents appear only mid-scramble */
+    --sol: #F2B705;
+    --esmeraldas: #157A3F;
     --sans: 'Archivo', 'Helvetica Neue', 'Arial', sans-serif;
     --serif: 'Literata', 'Georgia', serif;
     --mono: 'B612 Mono', 'Courier New', monospace;
     --gutter: clamp(1.5rem, 5vw, 4.5rem);
-    --hello: min(33vw, 40svh, 20rem);
+    --hello: min(33vw, 40svh, 20rem);   /* the widest state must fit */
     color-scheme: light;
   }
 
@@ -35,6 +38,8 @@
       --bg: #161511;
       --ink: #EBE7DC;
       --focus: #56B8DF;       /* Mitad Guayas */
+      --aji: #F0596B;
+      --esmeraldas: #3FBF71;
       color-scheme: dark;
     }
   }
@@ -52,6 +57,7 @@
 
   body {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);   /* a wide glyph can't stretch the page */
     grid-template-rows: minmax(16rem, 1fr) minmax(16rem, 1fr);
     height: 100%;
     min-height: 100svh;
@@ -73,17 +79,98 @@
     justify-content: flex-end;
     padding: var(--gutter) var(--gutter) 0;
     padding-top: max(var(--gutter), env(safe-area-inset-top));
+    position: relative;              /* or the clip misses the hidden heading */
+    overflow-x: clip;
   }
 
-  /* The greeting's baseline sits on the middle of the screen. */
+  /* The word's baseline is the horizon and anything below it is cut, so a
+     descending glyph mid-scramble never touches the name. */
   h1 {
     font-size: var(--hello);
-    font-weight: 800;
     line-height: 1;
     letter-spacing: -0.045em;
     margin-left: -0.06em;            /* optical: pull the stem to the margin */
     height: 0.8em;                   /* ascent only: baseline = bottom edge */
+    clip-path: inset(-1em -1em -0.025em -1em);   /* keep round overshoot whole */
     white-space: nowrap;
+  }
+
+  .word {
+    display: inline-block;
+    position: relative;
+    font-weight: 800;
+  }
+
+  /* In pieces, each letter is a cell as wide as the letter at rest (letters()
+     sets the width), so what it wears can't push the title along. */
+  :where(.word) > span { display: inline-flex; }
+
+  /* Mid-scramble, a letter's slot wears one of these. Cuts are hard: nothing
+     fades or tweens between them, which is what makes it read as type. */
+  .s { font-family: var(--serif); font-style: italic; font-weight: 400; }
+  .m { font-family: var(--mono); font-weight: 400; }
+  .k { font-weight: 900; }
+  .t { font-weight: 100; }
+  .s, .m, .k, .t { justify-content: center; }
+  .r { color: var(--aji); }
+  .y { color: var(--sol); font-size: 0.6em; }   /* the @ would spill out of its cell */
+  .b { color: var(--focus); }
+  .g { color: var(--esmeraldas); }
+
+  /* Stickers are inline SVG, drawn in the sprite at the top of <body>, because
+     no system has this dog. Flags are the visitor's own emoji. */
+  .sprite { position: absolute; width: 0; height: 0; }
+
+  .e, .c {
+    display: inline-block;
+    margin-bottom: -0.1em;           /* stand on the horizon, don't move it */
+    animation: wobble 270ms steps(3) infinite alternate;
+  }
+  .c { margin-bottom: -0.07em; }     /* a sticker inside a letter's cell */
+  .c svg { display: block; width: 100%; aspect-ratio: 1; }
+  .e { width: auto !important; }     /* the last letter's mark may outgrow its cell */
+  .e svg { display: block; width: 0.86em; height: 0.86em; }
+  @keyframes wobble { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+
+  /* Once the word is whole, its flag pops onto the first letter, hops once, and
+     pops off, leaving the word to rest. It's the visitor's own emoji. Letters have
+     counters, so it can't hide behind one: you'd see it through the H. */
+  .flag {
+    position: absolute;
+    left: 0.2em;
+    bottom: 2.25em;
+    font: 400 0.4em/1 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    letter-spacing: 0;
+    transform-origin: 50% 100%;
+    animation: hop 1080ms both;      /* 12 beats */
+  }
+  @keyframes hop {
+    0%   { transform: scale(0); }
+    12%  { transform: translateY(-10%) scale(1.08); }   /* short screens have little room */
+    20%  { transform: none; }
+    50%  { transform: none; }
+    58%  { transform: translateY(-20%); }
+    66%  { transform: none; }
+    90%  { transform: none; }
+    100% { transform: scale(0); }
+  }
+
+  .glow { position: relative; text-shadow: 0 0 0.05em #56B8DF, 0 0 0.14em #56B8DF; }
+
+  .glow i {
+    position: absolute;
+    left: var(--x);
+    bottom: var(--y);
+    width: var(--z);
+    height: var(--z);
+    background: var(--c);
+    clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+    transform: scale(0);
+    animation: spark 270ms ease-in-out var(--d) both;
+  }
+  @keyframes spark {
+    40%  { transform: scale(1) rotate(25deg); }
+    to   { transform: translateY(-0.3em) scale(0) rotate(90deg); }
   }
 
   /* ---------- below the horizon ---------- */
@@ -146,17 +233,27 @@
      different times). Without JS nothing is hidden; after 3s it shows anyway. */
   (() => {
     const root = document.documentElement;
-    const show = () => root.classList.remove('fonts-pending');
     root.classList.add('fonts-pending');
-    Promise.all(['800 1em Archivo', 'italic 1em Literata', '1em "B612 Mono"'].map((f) => document.fonts.load(f)))
-      .finally(show);
-    setTimeout(show, 3000);
+    window.pageReady = new Promise((ready) => {
+      const show = () => { root.classList.remove('fonts-pending'); ready(); };
+      Promise.all(['800 1em Archivo', 'italic 1em Literata', '1em "B612 Mono"'].map((f) => document.fonts.load(f)))
+        .finally(show);
+      setTimeout(show, 3000);
+    });
   })();
 </script>
 </head>
 <body>
+<svg class="sprite" aria-hidden="true"><defs>
+<linearGradient id="a" x2="1" y2="1"><stop offset="0" stop-color="#56B8DF"/><stop offset="1" stop-color="#6B4FD8"/></linearGradient>
+</defs>
+<symbol id="cl" viewBox="0 0 64 64"><path fill="#D97757" shape-rendering="crispEdges" d="M12 14h40v12h8v10h-8v10h-4v8h-6v-8h-6v8h-6v-8h-8v8h-6v-8h-4V36H4V26h8z"/><path fill="#191813" shape-rendering="crispEdges" d="M22 24h5v8h-5zM37 24h5v8h-5z"/></symbol>
+<symbol id="dg" viewBox="0 0 64 64"><path fill="#fff" stroke="#191813" stroke-width="2.4" stroke-linejoin="round" d="M12 4c5 3 13 11 15 15 3-1 7-1 10 0 2-4 10-12 15-15 3 8 3 20 1 29 1 4 0 7-3 11-4 7-11 14-18 14S23 51 19 44c-3-4-4-7-3-11-2-9-2-21-4-29Z" /><path fill="#F4B6AE" d="M16 13c3 3 6 7 7 9l-5 4c-2-4-2-9-2-13zM48 13c-3 3-6 7-7 9l5 4c2-4 2-9 2-13z"/><path fill="#EFEAE0" d="M32 30c-5 4-10 11-10 17 3 5 7 9 10 9s7-4 10-9c0-6-5-13-10-17z"/><circle cx="24" cy="32" r="2.8" fill="#191813"/><circle cx="40" cy="32" r="2.8" fill="#191813"/><path fill="#E8707F" d="M28 47h8v5a4 4 0 0 1-8 0z"/><path fill="#191813" d="M27.5 40.5c2-1.3 7-1.3 9 0 .8.7-2.5 4.5-4.5 4.5s-5.3-3.8-4.5-4.5z"/></symbol>
+<symbol id="tm" viewBox="0 0 64 64"><rect x="4" y="9" width="56" height="46" rx="8" fill="#2A2822" stroke="#67635A" stroke-width="1.5"/><path fill="none" stroke="#3FBF71" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" d="M15 24l10 8-10 8M32 41h14"/></symbol>
+<symbol id="sp" viewBox="0 0 64 64"><path fill="url(#a)" d="M26 8c3 16 7 20 23 23-16 3-20 7-23 23-3-16-7-20-23-23 16-3 20-7 23-23z"/><path fill="#F2B705" d="M50 5c1 7 3 9 10 10-7 1-9 3-10 10-1-7-3-9-10-10 7-1 9-3 10-10z"/></symbol>
+</svg>
   <header class="north">
-    <h1><span lang="es">Hola</span><span class="visually-hidden">, I’m José.</span></h1>
+    <h1><span class="word" aria-hidden="true">Hola</span><span class="visually-hidden"><span lang="es">Hola</span>, I’m José.</span></h1>
   </header>
 
   <main class="south">
@@ -167,5 +264,154 @@
     <p class="elsewhere"><a href="https://github.com/josemanosalvas">GitHub</a></p>
   </main>
 
+<script>
+  (() => {
+    // Each greeting: the word, what its last letter becomes, and the flag that
+    // says where the word is from once it's whole.
+    const greetings = [
+      { word: 'Hola', mark: ['sp', 'e'], flag: '🇪🇨' },
+      { word: 'Salü', mark: ['dg', 'e'], flag: '🇨🇭' },   // the shepherd, and Switzerland
+    ];
+
+    // Everything moves on one beat, counted from the start of a 36-beat bar.
+    // Whatever the word's length, the old one breaks up from beat 0, the next
+    // arrives on 5, its mark lands on 10, and the word is whole on 14, with its
+    // flag on top. The rest of the bar is for reading.
+    const beat = 90;
+    const bar = 36, arrival = 5, reveal = 5, hold = 4, stay = 12;
+    const whole = arrival + reveal + hold;
+    const at = (beats, then) => setTimeout(then, beats * beat);
+
+    // What a letter can turn into on its way to the next greeting: [glyph, slot
+    // styles]. Style 'c' makes the glyph a sticker: terminal, Claude, sparkle,
+    // shepherd. The narrow l only takes the slim symbols.
+    const glyphs = [
+      ['tm', 'c'], ['*', 'k b'], ['cl', 'c'], ['/', 'k r'], ['{', 'k g'],
+      ['sp', 'c'], ['}', 'k b'], ['dg', 'c'], ['@', 's y'], ['0', 'm r'],
+    ];
+    const slim = glyphs.filter(([, styles]) => styles[0] === 'k');
+
+    // The first greeting, in the manner of a score: [beat, slot, glyph, slot styles].
+    // It breaks up a slot at a time and lands on the same beats as the others.
+    const intro = [
+      [1, 1, '*', 'k b'], [1, 2, '/', 'k r'],
+      [2, 3, 'dg', 'c'],
+      [3, 0, 'H', 's b'],
+      [4, 1, '0', 'm r'], [4, 2, '{', 'k g'],
+      [5, 1, 'cl', 'c'], [5, 2, '}', 'k b'], [5, 3, '0', 'm r'],
+      [6, 0, 'H', 't'],
+      [7, 0, 'H', ''],
+      [8, 1, 'o', 't'], [8, 2, 'l', 's'],
+      [9, 1, 'o', 'glow'], [9, 2, 'l', ''], [9, 3, 'a', 't'],
+      [10, 3, 'sp', 'e'],
+      [14, 1, 'o', ''], [14, 3, 'a', ''],
+    ];
+
+    // left / bottom / size / colour / delay of each spark thrown by the glowing letter.
+    const sparks = [
+      ['.12em', '.9em', '.17em', 'var(--focus)', '0ms'],
+      ['.42em', '.8em', '.1em', 'var(--sol)', '60ms'],
+      ['.24em', '1.1em', '.12em', 'var(--aji)', '120ms'],
+      ['.38em', '1em', '.14em', 'var(--focus)', '180ms'],
+    ];
+
+    const word = document.querySelector('.word');
+    const heading = document.querySelector('h1');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+    let current = 0, timer = null, turn = 0;
+
+    // One span per letter, measured inline so the kerning is in the widths, then
+    // locked: the title holds its width and only the mark can add to it.
+    function letters(text) {
+      word.textContent = '';
+      const slots = [...text].map((letter) => {
+        const slot = document.createElement('span');
+        slot.textContent = letter;
+        slot.style.display = 'inline';
+        return word.appendChild(slot);
+      });
+      const widths = slots.map((slot) => slot.getBoundingClientRect().width);
+      slots.forEach((slot, n) => { slot.style.display = ''; slot.style.width = `${widths[n]}px`; });
+      return slots;
+    }
+
+    const sticker = (id) => `<svg><use href="#${id}"/></svg>`;
+
+    function cut(slot, glyph, styles) {
+      if (styles === 'e' || styles === 'c') slot.innerHTML = sticker(glyph);
+      else slot.textContent = glyph;
+      slot.className = styles;
+    }
+
+    function raise(flag) {
+      word.insertAdjacentHTML('beforeend', `<span class="flag">${flag}</span>`);
+    }
+
+    function look(letter) {
+      const pool = letter === 'l' ? slim : glyphs;
+      return pool[turn++ % pool.length];
+    }
+
+    // A letter in pieces changes every other beat, long enough to see a sticker,
+    // out of step with its neighbours, so something moves on every beat.
+    function churn(slot, letter, from, until) {
+      for (let b = from; b < until; b += 2) at(b, () => cut(slot, ...look(letter)));
+    }
+
+    // The next word comes out of symbols that change on the beat. Its letters
+    // land left to right, each through a thin cut; the last lands as its mark.
+    function arrive({ word: text, mark, flag }) {
+      const slots = letters(text);
+      const last = slots.length - 1;
+      slots.forEach((slot, n) => {
+        const land = reveal - (last - n);
+        cut(slot, ...look(text[n]));
+        churn(slot, text[n], 2 - n % 2, land - 1);
+        at(land - 1, () => cut(slot, text[n], 't'));
+        at(land, () => (n === last ? cut(slot, ...mark) : cut(slot, text[n], '')));
+      });
+      at(reveal + hold, () => { cut(slots[last], text[last], ''); raise(flag); });
+      at(reveal + hold + stay, () => { word.textContent = text; });
+    }
+
+    // The old word breaks up in place, a letter a beat, and stays in motion.
+    function go(i) {
+      const text = greetings[current].word;
+      letters(text).forEach((slot, n) => churn(slot, text[n], n, arrival));
+      current = i;
+      at(arrival, () => arrive(greetings[i]));
+    }
+
+    function start() {
+      if (timer || reduce.matches || document.hidden) return;
+      timer = setInterval(() => go((current + 1) % greetings.length), bar * beat);
+    }
+    function stop() { clearInterval(timer); timer = null; }
+
+    heading.addEventListener('mouseenter', stop);
+    heading.addEventListener('mouseleave', start);
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+
+    if (reduce.matches || document.hidden) return start();
+
+    pageReady.then(() => {
+      const { word: hola } = greetings[0];
+      const slots = letters(hola);
+      for (const [when, n, glyph, styles] of intro) {
+        at(when, () => {
+          cut(slots[n], glyph, styles);
+          if (styles !== 'glow') return;
+          for (const [x, y, z, c, d] of sparks) {
+            const spark = slots[n].appendChild(document.createElement('i'));
+            spark.style.cssText = `--x:${x};--y:${y};--z:${z};--c:${c};--d:${d}`;
+          }
+        });
+      }
+      at(whole, () => raise(greetings[0].flag));
+      at(whole + stay, () => { word.textContent = hola; });
+      start();
+    });
+  })();
+</script>
 </body>
 </html>
