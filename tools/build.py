@@ -60,6 +60,10 @@ FONTS = [
 ]
 
 
+# font-display: block, not swap. The fonts are in the page, so they cannot be
+# slow or fail to arrive; they only need decoding. Under swap a slow CPU paints
+# one frame in Helvetica and Georgia first (measured at 10x CPU throttling).
+
 def font_face(font):
     tt = TTFont(SRC / font["file"])
     if font["pin"]:
@@ -82,7 +86,7 @@ def font_face(font):
     css = (
         f"@font-face{{font-family:'{font['family']}';"
         f"src:url(data:font/woff2;base64,{base64.b64encode(data).decode()}) format('woff2');"
-        f"font-weight:{font['weight']};font-style:{font['style']};font-display:swap;"
+        f"font-weight:{font['weight']};font-style:{font['style']};font-display:block;"
         "ascent-override:80%;descent-override:20%;line-gap-override:0%}"
     )
     return css, len(data)

@@ -61,6 +61,8 @@
     background: var(--bg);
   }
 
+  .fonts-pending body { visibility: hidden; }
+
   ::selection { background: #F2B705; color: #191813; }
   :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
@@ -127,6 +129,7 @@
 
   a:hover { text-decoration-thickness: 2px; }
 
+
   .hello {
     font-family: var(--serif);
     font-style: italic;
@@ -157,6 +160,20 @@
     .word.set, .word.rise { animation: none; }
   }
 </style>
+<script>
+  /* Start decoding all three fonts now and reveal the page in one frame when
+     they are ready, so nothing paints in pieces (under font-display: block,
+     text waits for its own font but underlines don't, and faces finish at
+     different times). Without JS nothing is hidden; after 3s it shows anyway. */
+  (() => {
+    const root = document.documentElement;
+    const show = () => root.classList.remove('fonts-pending');
+    root.classList.add('fonts-pending');
+    Promise.all(['800 1em Archivo', 'italic 1em Literata', '1em "B612 Mono"'].map((f) => document.fonts.load(f)))
+      .finally(show);
+    setTimeout(show, 3000);
+  })();
+</script>
 </head>
 <body>
   <header class="north">
