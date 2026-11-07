@@ -20,13 +20,13 @@
 </script>
 <link rel="stylesheet" href="css/mitad.css">
 <style>
-  /* The page is the equator: paper above latitude 0°00′00″, the flag below.
-     Mitad supplies the voices and the colours; this sheet is a poster. */
+  /* Two halves: paper above, ink below. The greeting stands on the ink in
+     the same ink, so it grows out of the ground rather than sitting on it.
+     Mitad supplies the faces and the two neutrals; dark mode swaps them. */
 
   :root {
     --gutter: clamp(1.5rem, 5vw, 4.5rem);
     --hello: min(33vw, 40svh, 20rem);   /* "Salut" must fit the width */
-    --band: clamp(0.75rem, 1.6svh, 1.25rem);
   }
 
   html, body { height: 100%; }
@@ -37,44 +37,17 @@
     min-height: 100svh;
   }
 
-  /* ---------- north: paper ---------- */
+  /* ---------- top: paper ---------- */
   .north {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-end;
     padding: var(--gutter) var(--gutter) 0;
     padding-top: max(var(--gutter), env(safe-area-inset-top));
   }
 
-  .languages {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0 var(--s-6);
-    margin: 0;
-  }
-
-  .languages button {
-    background: none;
-    border: 0;
-    padding: 0;
-    cursor: pointer;
-    transition: color 200ms;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .languages button { transition: none; }
-  }
-
-  .languages button:hover { color: var(--c-ink); }
-  .languages button[aria-pressed="true"] { color: var(--c-accent); }
-
-  .languages small {
-    font-size: inherit;
-    opacity: 0.6;
-  }
-
-  /* The horizon. The word's baseline sits on the band and anything below
-     the line is cut off, so greetings rise out of it and set back into it. */
+  /* The word's baseline is the horizon and anything below it is cut, so
+     each greeting rises out of the ink and sets back into it. */
   h1 {
     margin: 0;
     font-family: var(--f-sans);
@@ -85,6 +58,7 @@
     height: 0.8em;                   /* ascent only: baseline = bottom edge */
     clip-path: inset(-1em -1em 0 -1em);
     white-space: nowrap;
+    color: var(--c-ink);
   }
 
   .word {
@@ -104,16 +78,13 @@
     to   { transform: translateY(0); font-weight: 800; }
   }
 
-  /* ---------- south: the flag ---------- */
+  /* ---------- bottom: ink ---------- */
   .south {
-    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background: var(--c-accent);
+    background: var(--c-ink);
     color: var(--c-bg);
-    border-top: var(--band) solid #F2B705;          /* Sol */
-    border-bottom: calc(var(--band) / 2) solid #D91E36;  /* Ají */
     padding: var(--s-6) var(--gutter) var(--gutter);
     padding-bottom: max(var(--gutter), env(safe-area-inset-bottom));
   }
@@ -146,15 +117,12 @@
     overflow-wrap: anywhere;
   }
 
-  .coords {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--s-6);
+  .elsewhere {
     margin: 0;
+    text-align: right;
   }
 
-  .coords .label { color: inherit; opacity: 0.75; }
-  .coords a.label { opacity: 1; }
+  .elsewhere .label { color: inherit; }
 
   @media (prefers-reduced-motion: reduce) {
     .word.set, .word.rise { animation: none; }
@@ -163,12 +131,6 @@
 </head>
 <body>
   <header class="north">
-    <div class="languages" role="group" aria-label="Say hello in">
-      <button type="button" class="label" data-i="0" aria-pressed="true" lang="es">Español</button>
-      <button type="button" class="label" data-i="1" aria-pressed="false" lang="fr">Français</button>
-      <button type="button" class="label" data-i="2" aria-pressed="false">English</button>
-      <button type="button" class="label" data-i="3" aria-pressed="false"><span lang="de">Deutsch</span> <small>learning</small></button>
-    </div>
     <h1><span class="word" lang="es">Hola</span><span class="visually-hidden">, I’m José.</span></h1>
   </header>
 
@@ -177,10 +139,7 @@
       <p class="name" aria-hidden="true">I’m José.</p>
       <p class="hello"><a href="mailto:hello@josemanosalvas.ch">hello@josemanosalvas.ch</a></p>
     </div>
-    <p class="coords">
-        <span class="label tnum">0°00′00″ → Switzerland</span>
-        <a class="label" href="https://github.com/josemanosalvas">GitHub</a>
-    </p>
+    <p class="elsewhere"><a class="label" href="https://github.com/josemanosalvas">GitHub</a></p>
   </main>
 
 <script>
@@ -193,38 +152,28 @@
     ];
     const word = document.querySelector('.word');
     const heading = document.querySelector('h1');
-    const buttons = [...document.querySelectorAll('.languages button')];
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-    let current = 0, timer = null, chosen = false, busy = false;
-
-    function paint(i) {
-      word.textContent = greetings[i].word;
-      word.lang = greetings[i].lang;
-      buttons.forEach((b, n) => b.setAttribute('aria-pressed', String(n === i)));
-    }
+    let current = 0, timer = null, busy = false;
 
     function go(i) {
-      if (i === current || busy) return;
+      if (busy) return;
       current = i;
-      if (reduce.matches) { paint(i); return; }
       busy = true;
       word.className = 'word set';
       setTimeout(() => {
-        paint(i);
+        word.textContent = greetings[i].word;
+        word.lang = greetings[i].lang;
         word.className = 'word rise';
         setTimeout(() => { word.className = 'word'; busy = false; }, 900);
       }, 520);
     }
 
     function start() {
-      if (timer || chosen || reduce.matches || document.hidden) return;
+      if (timer || reduce.matches || document.hidden) return;
       timer = setInterval(() => go((current + 1) % greetings.length), 3200);
     }
     function stop() { clearInterval(timer); timer = null; }
 
-    buttons.forEach((b) => b.addEventListener('click', () => {
-      chosen = true; stop(); go(Number(b.dataset.i));
-    }));
     heading.addEventListener('mouseenter', stop);
     heading.addEventListener('mouseleave', start);
     document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
