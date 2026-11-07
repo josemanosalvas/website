@@ -1,0 +1,147 @@
+<!doctype html>
+<!-- The white Swiss shepherd that src/shepherd.avif is rendered from: a bust made of
+     signed distance fields, ray-marched once, in the manner of an emoji. Eyes and
+     inner ears are painted in the shading, and the cut is on a pixel row, so it's exactly
+     level. Open this in a browser and press Save for a 1536 px PNG with transparency,
+     then crop it to its ink and encode it:
+
+       from PIL import Image
+       dog = Image.open("shepherd.png"); dog = dog.crop(dog.getbbox())
+       size = (360, round(dog.height * 360 / dog.width))
+       dog.resize(size, Image.LANCZOS).save("src/shepherd.avif", quality=50, speed=0, subsampling="4:4:4")
+
+     Only the AVIF goes into the page. -->
+<meta charset="utf-8">
+<title>White Swiss shepherd</title>
+<style>html { background: #888 } canvas { display: block; width: 768px; height: 768px }</style>
+<button id="save">Save</button>
+<canvas id="c"></canvas>
+<script>
+const Q = new URLSearchParams(location.search), SIZE = +(Q.get('s') || 1536), AA = SIZE > 1000 ? 3 : 2;
+const FS=`#version 300 es
+precision highp float;
+in vec2 v;out vec4 o;
+uniform vec2 px;
+#define AA ${AA}
+const float YAW=.38,PIT=.15,WIN=1.80,CUTV=.0625,CUTY=-.60;   // CUTV is a whole pixel row at any multiple of 16
+const vec2 CEN=vec2(.10,CUTY+(.5-CUTV)*WIN);
+const vec3 H=vec3(0);
+const vec3 EAR=vec3(.285,.432,-.225);
+const float LONG=1.12;                                              // how much longer than the first draft the muzzle is
+vec3 snout(vec3 q){if(q.z>.2)q.z=.2+(q.z-.2)/LONG;return q;}
+mat3 HR;vec3 EYE=vec3(.160,.176,.335);
+float m=0.;
+float sm(float a,float b,float k){k*=1.5;float h=max(k-abs(a-b),0.)/k;return min(a,b)-h*h*h*k/6.;} // cubic: C2, so no crease at the blend's edge
+float ell(vec3 p,vec3 c,vec3 r){p-=c;float a=length(p/r),b=length(p/(r*r));return a*(a-1.)/b;}
+float rc(vec3 p,vec3 a,vec3 b,float r1,float r2){ // exact round cone
+  vec3 ba=b-a;float l2=dot(ba,ba),rr=r1-r2,a2=l2-rr*rr,il2=1./l2;vec3 pa=p-a;float y=dot(pa,ba),z=y-l2;vec3 q=pa*l2-ba*y;float x2=dot(q,q),y2=y*y*l2,z2=z*z*l2,k=sign(rr)*rr*rr*x2;
+  if(sign(z)*a2*z2>k)return sqrt(x2+z2)*il2-r2;
+  if(sign(y)*a2*y2<k)return sqrt(x2+y2)*il2-r1;
+  return (sqrt(x2*a2*il2)+y*rr)*il2-r1;}
+float ves(vec2 p,float r,float d){p=abs(p);float b=sqrt(r*r-d*d);return ((p.y-b)*d>p.x*b)?length(p-vec2(0,b)):length(p-vec2(-d,0))-r;} // exact gothic arch, tips on y
+mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,s,-s,c);}
+vec3 earq(vec3 s){vec3 q=s-EAR;q.xy=rot(.235)*q.xy;q.xz=rot(-.34)*q.xz;q.yz=rot(.10)*q.yz;return q;}
+float eart(vec3 q){return ves(q.xy,.50,.335)-.05;}                    // the ear's outline: wide base, soft tip
+vec3 cup(vec3 q){float x=clamp(q.x,-.28,.28);q.z-=.75*x*x;return q;}  // cupped; clamped, so the shear never stretches space past 1.09
+float ear(vec3 s){vec3 q=cup(earq(s));
+  float e=eart(q),R=.042;return (length(vec2(max(e+R,0.),q.z))-R)/1.09;}
+float head(vec3 q){
+  float d=ell(q,vec3(0,.10,-.03),vec3(.43,.365,.44));
+  d=sm(d,rc(q,vec3(0,.04,.16),vec3(0,-.085,.82),.235,.138),.2);       // the long muzzle, tapering out of the cheeks
+  vec3 j=q-vec3(0,-.145,.38);j.yz=rot(-.14)*j.yz;                     // the jaw: an ellipsoid, because a round cone's cap ring shows as a crease
+  d=sm(d,ell(j,vec3(0),vec3(.165,.125,.47)),.12);
+  return d;}
+float nose(vec3 q){float d=ell(q,vec3(0,-.012,.945),vec3(.094,.064,.07));return sm(d,ell(q,vec3(0,-.058,.93),vec3(.05,.04,.05)),.04);}
+float neck(vec3 p){float d=sm(rc(p,vec3(.08,-.04,-.31),vec3(.17,-.85,-.26),.40,.50),ell(p,vec3(.18,-1.0,-.18),vec3(.70,.66,.54)),.25);
+  d=sm(d,ell(p,vec3(.14,-.27,-.24),vec3(.56,.34,.46)),.22);         // a thick ruff, not a slim neck
+  return sm(d,rc(p,vec3(.17,-.42,-.22),vec3(.17,-1.1,-.22),.555,.60),.16);}   // the shoulders run straight down to the cut
+float map(vec3 p){
+  vec3 u=(p-H)*HR,q=snout(u),s=vec3(abs(u.x),u.yz);
+  float d=sm(head(q)/1.09,ear(s),.09);
+  d=sm(d,neck(p),.09);m=0.;
+  float n=nose(q)/1.09;if(n<d){d=n;m=1.;}
+  return d;}
+vec3 nor(vec3 p){vec2 e=vec2(.0012,0);return normalize(vec3(map(p+e.xyy)-map(p-e.xyy),map(p+e.yxy)-map(p-e.yxy),map(p+e.yyx)-map(p-e.yyx)));}
+float ao(vec3 p,vec3 n){float a=0.,w=1.;for(int i=1;i<6;i++){float h=.04*float(i)*float(i)*.5;float x=max(0.,h-map(p+n*h))/h;a+=w*x*x/(x+.25);w*=.7;}return clamp(1.-a*.42,0.,1.);} // smooth onset, no band where a neighbour enters range
+float sh(vec3 p,vec3 l){float r=1.,t=.03;for(int i=0;i<36&&t<2.2;i++){float h=map(p+l*t);r=min(r,6.*h/t);t+=clamp(h*.8,.012,.2);if(r<.01)break;}r=clamp(r,0.,1.);return r*r*(3.-2.*r);}
+vec4 shade(vec2 uv){
+  if(uv.y<CUTV)return vec4(0);
+  vec3 ro=vec3(CEN+(uv-.5)*WIN,3.5),rd=vec3(0,0,-1);
+  float t=0.,d=1.;bool hit=false;for(int i=0;i<320;i++){d=map(ro+rd*t);if(d<.0004){hit=true;break;}t+=max(d*.8,.0003);if(t>7.)break;}
+  if(!hit&&!(t<7.&&d<.004))return vec4(0);                      // a grazing ray that runs out of steps is still on the surface
+  vec3 p=ro+rd*t;float id=m;vec3 n=nor(p);
+  vec3 u=(p-H)*HR,q=snout(u),s=vec3(abs(u.x),u.yz);
+  vec3 L=normalize(vec3(-.30,.80,.62));
+  float em=smoothstep(.03,.0,ear(s)),am=mix(ao(p,n),1.,.7*em),sd=mix(.82,1.,sh(p+n*.012,L));
+  float up=n.y*.5+.5,vz=clamp(n.z,0.,1.),wr=clamp(dot(n,L)*.62+.38,0.,1.);
+  vec3 c=vec3(1.,.995,.98);
+  // inner ear, painted
+  vec3 qe=cup(earq(s));float e2=eart(qe);
+  float inr=smoothstep(-.058,-.088,e2)*step(0.,qe.z+.01)*smoothstep(.0,.09,head(q))*step(ear(s),.012);
+  c=mix(c,mix(vec3(.985,.875,.855),vec3(.90,.70,.70),smoothstep(.30,.0,qe.y)),inr);
+  vec3 lit=c*(mix(vec3(.62,.625,.68),vec3(.80,.80,.81),up)*am+vec3(1.,.985,.96)*.34*wr*sd);
+  lit*=mix(vec3(.70,.705,.755),vec3(1.),smoothstep(.0,.5,vz));
+  lit*=mix(vec3(.95,.95,1.),vec3(1.),am);
+  lit*=mix(vec3(.93,.935,.955),vec3(1.),smoothstep(CUTY,CUTY+.36,p.y));
+  if(id<.5){
+    // eye: a dark almond decal with a crisp catchlight
+    vec3 N=normalize(vec3(.28,.20,.94)),T=normalize(vec3(N.z,0,-N.x)),B=cross(N,T),r=vec3(abs(q.x),q.yz)-EYE;
+    vec2 e=rot(-.20)*vec2(dot(r,T),dot(r,B));if(q.x<0.)e.x*=.80;
+    float ed=ves(e.yx,.068,.012)-.006;
+    if(q.z>.1&&dot(n,N)>.15){
+      float bw=exp(-pow((e.x+.012)/.08,2.)-pow((e.y-.074)/.028,2.));lit*=mix(vec3(1.),vec3(.89,.89,.93),bw);
+      lit=mix(lit,vec3(.33,.30,.31),smoothstep(.014,.0,ed)*.5);
+      vec3 ey=mix(vec3(.17,.09,.05),vec3(.03,.022,.02),smoothstep(-.05,.03,e.y));
+      float aw=fwidth(ed)*.0+.0025;
+      vec3 ew=H+HR*vec3(sign(q.x)*EYE.x,EYE.y,.2+(EYE.z-.2)*LONG);
+      ey=mix(ey,vec3(1.),smoothstep(.0112,.0088,length(p.xy-ew.xy-vec2(-.015,.014))));
+      lit=mix(lit,ey,smoothstep(aw,-aw,ed));
+    }
+  }else{
+    vec3 r=reflect(rd,n);
+    lit=vec3(.04,.038,.042)+.16*smoothstep(-.1,.9,dot(n,L))*vec3(.8,.82,.9)+.20*pow(clamp(dot(r,L),0.,1.),9.)+.8*pow(clamp(dot(r,L),0.,1.),70.);
+  }
+  return vec4(min(lit,vec3(1.)),1.);
+}
+void main(){
+  HR=mat3(1);
+  float a=YAW,c=PIT;vec3 F=vec3(-sin(a),0,cos(a)),R=vec3(cos(a),0,sin(a)),U=vec3(0,1,0);
+  HR=mat3(R,U*cos(c)+F*sin(c),F*cos(c)-U*sin(c));
+  vec3 acc=vec3(0);float al=0.;
+  for(int j=0;j<AA;j++)for(int i=0;i<AA;i++){vec4 c=shade(v+px*((vec2(i,j)+.5)/float(AA)-.5));acc+=c.rgb*c.a;al+=c.a;}
+  o=al>0.?vec4(acc/al,al/float(AA*AA)):vec4(0);
+}`;
+const VS=`#version 300 es
+in vec2 p;out vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0,1);}`;
+const c = document.getElementById('c');
+c.width = c.height = SIZE;
+const gl = c.getContext('webgl2', { preserveDrawingBuffer: true, premultipliedAlpha: false, antialias: false });
+const shader = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s)); return s; };
+const program = gl.createProgram();
+gl.attachShader(program, shader(gl.VERTEX_SHADER, VS));
+gl.attachShader(program, shader(gl.FRAGMENT_SHADER, FS));
+gl.bindAttribLocation(program, 0, 'p');
+gl.linkProgram(program);
+if (!gl.getProgramParameter(program, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(program));
+gl.useProgram(program);
+gl.uniform2f(gl.getUniformLocation(program, 'px'), 1 / SIZE, 1 / SIZE);
+gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+gl.enableVertexAttribArray(0);
+gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+gl.enable(gl.SCISSOR_TEST);
+let done = false;
+const draw = () => {                 // in tiles, so a slow software GL never stalls the GPU process
+  if (done) return; done = true;
+  const T = 96;
+  for (let y = 0; y < SIZE; y += T) for (let x = 0; x < SIZE; x += T) { gl.scissor(x, y, T, T); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.finish(); }
+};
+window.png = () => { draw(); return c.toDataURL('image/png'); };
+document.getElementById('save').onclick = () => {
+  const a = document.createElement('a');
+  a.href = window.png();
+  a.download = 'shepherd.png';
+  a.click();
+};
+</script>

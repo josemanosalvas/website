@@ -2,8 +2,8 @@
 """Build index.html from src/index.html.
 
 Subsets Mitad's fonts to the characters on the page, embeds them as base64
-between the /* fonts:start */ and /* fonts:end */ markers, and minifies the
-result into index.html, the one file that gets uploaded.
+between the /* fonts:start */ and /* fonts:end */ markers, embeds the shepherd,
+and minifies the result into index.html, the one file that gets uploaded.
 
 Every trim here was checked against screenshots of the unminified page with
 Mitad's original fonts: 41 renders, pixel-identical. Narrowing a variable axis
@@ -39,7 +39,7 @@ FONTS = [
         "pin": None,
         "weight": "100 900",
         "style": "normal",
-        "text": "Hola Salü, I’m José. */{}",  # greetings, name, hidden heading, intro
+        "text": "Hola Salü, I’m José. /",  # greetings, name, hidden heading, symbols
     },
     {
         "family": "Literata",
@@ -47,7 +47,7 @@ FONTS = [
         "pin": {"wght": 400},
         "weight": "400",
         "style": "italic",
-        "text": "hello@josemanosalvas.ch H",  # email, intro
+        "text": "hello@josemanosalvas.ch",  # email
     },
     {
         "family": "B612 Mono",
@@ -55,7 +55,7 @@ FONTS = [
         "pin": None,
         "weight": "400",
         "style": "normal",
-        "text": "GITHUB ol0",  # uppercased in CSS, intro
+        "text": "GITHUB",  # uppercased in CSS
     },
 ]
 
@@ -77,6 +77,12 @@ def font_face(font):
     sub = subset.Subsetter(opts)
     sub.populate(text=font["text"])
     sub.subset(tt)
+    # Safari ignores the override descriptors in the @font-face below, so the font carries
+    # the same numbers. The word's baseline, and everything drawn on it, depends on them.
+    upm = tt["head"].unitsPerEm
+    tt["hhea"].ascent = tt["OS/2"].sTypoAscender = round(.8 * upm)
+    tt["hhea"].descent = tt["OS/2"].sTypoDescender = -round(.2 * upm)
+    tt["hhea"].lineGap = tt["OS/2"].sTypoLineGap = 0
     buf = io.BytesIO()
     tt.flavor = "woff2"
     tt.recalcTimestamp = False        # same input, same bytes
@@ -111,6 +117,8 @@ def main():
     if not marker.search(html):
         sys.exit("src/index.html has no /* fonts:start */ … /* fonts:end */ markers")
     html = marker.sub(lambda _: "\n".join(faces), html)
+    dog = base64.b64encode((ROOT / "src" / "shepherd.avif").read_bytes()).decode()
+    html = html.replace("shepherd.avif", f"data:image/avif;base64,{dog}")
     html = re.sub(r"(?s)<script>(.*?)</script>", lambda m: f"<script>{minify_js(m[1])}</script>", html)
     out = minify_html.minify(html, minify_css=True)
     (ROOT / "index.html").write_text(out, encoding="utf-8")
