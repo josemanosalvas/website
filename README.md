@@ -7,7 +7,7 @@ Mitad, my personal design system.
 
 ```
 index.html        the page (site-only styles and the greeting script are inline)
-favicon.svg       paper above, ink below
+favicon.svg       a horizon line
 css/mitad.css     copy of design-system/dist/mitad.css
 fonts/            Archivo, Literata, B612 Mono (woff2) + OFL.txt
 ```

@@ -20,9 +20,9 @@
 </script>
 <link rel="stylesheet" href="css/mitad.css">
 <style>
-  /* Two halves: paper above, ink below. The greeting stands on the ink in
-     the same ink, so it grows out of the ground rather than sitting on it.
-     Mitad supplies the faces and the two neutrals; dark mode swaps them. */
+  /* One ground, one ink. The greeting stands on an invisible horizon at the
+     middle of the screen and rises out of it. Mitad supplies the faces and
+     the two neutrals; dark mode swaps them. */
 
   :root {
     --gutter: clamp(1.5rem, 5vw, 4.5rem);
@@ -56,7 +56,7 @@
     letter-spacing: -0.045em;
     margin-left: -0.06em;            /* optical: pull the stem to the margin */
     height: 0.8em;                   /* ascent only: baseline = bottom edge */
-    clip-path: inset(-1em -1em 0 -1em);
+    clip-path: inset(-1em -1em -0.025em -1em);   /* keep round overshoot whole */
     white-space: nowrap;
     color: var(--c-ink);
   }
@@ -78,13 +78,11 @@
     to   { transform: translateY(0); font-weight: 800; }
   }
 
-  /* ---------- bottom: ink ---------- */
+  /* ---------- below the horizon ---------- */
   .south {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background: var(--c-ink);
-    color: var(--c-bg);
     padding: var(--s-6) var(--gutter) var(--gutter);
     padding-bottom: max(var(--gutter), env(safe-area-inset-bottom));
   }
@@ -105,8 +103,6 @@
   }
 
   .south a:hover { text-decoration-thickness: 2px; }
-
-  .south :focus-visible { outline-color: var(--c-bg); }
 
   .hello {
     margin: 0;
