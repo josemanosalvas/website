@@ -95,14 +95,8 @@
   .word.set  { animation: set 520ms cubic-bezier(.55, 0, .8, .2) forwards; }
   .word.rise { animation: rise 900ms cubic-bezier(.16, .84, .24, 1) both; }
 
-  @keyframes set {
-    to { transform: translateY(105%); font-weight: 300; }
-  }
-  @keyframes rise {
-    from { transform: translateY(105%); font-weight: 200; }
-    55%  { font-weight: 500; }
-    to   { transform: translateY(0); font-weight: 800; }
-  }
+  @keyframes set  { to   { transform: translateY(105%); } }
+  @keyframes rise { from { transform: translateY(105%); } }
 
   /* ---------- below the horizon ---------- */
   .south {
