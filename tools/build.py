@@ -39,7 +39,7 @@ FONTS = [
         "pin": None,
         "weight": "100 900",
         "style": "normal",
-        "text": "Hola Salü, I’m José. /",  # greetings, name, hidden heading, symbols
+        "text": "Hola Salü, I’m José. ñ+",  # greetings, name, hidden heading, signs
     },
     {
         "family": "Literata",
@@ -47,7 +47,7 @@ FONTS = [
         "pin": {"wght": 400},
         "weight": "400",
         "style": "italic",
-        "text": "hello@josemanosalvas.ch",  # email
+        "text": "hello@josemanosalvas.ch HSáöo",  # email, letters on their way
     },
     {
         "family": "B612 Mono",
@@ -56,6 +56,14 @@ FONTS = [
         "weight": "400",
         "style": "normal",
         "text": "GITHUB",  # uppercased in CSS
+    },
+    {
+        "family": "B612 Mono",
+        "file": "b612mono-700.woff2",
+        "pin": None,
+        "weight": "700",
+        "style": "normal",
+        "text": "óä",  # letters on their way
     },
 ]
 

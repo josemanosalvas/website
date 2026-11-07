@@ -1,8 +1,8 @@
 <!doctype html>
 <!-- The white Swiss shepherd that src/shepherd.avif is rendered from: a bust made of
      signed distance fields, ray-marched once, in the manner of an emoji. Eyes and
-     inner ears are painted in the shading, and the cut is on a pixel row, so it's exactly
-     level. Open this in a browser and press Save for a 1536 px PNG with transparency,
+     inner ears are painted in the shading, and the chest closes in a soft curve, so there's
+     no cut to show. Open this in a browser and press Save for a 1536 px PNG with transparency,
      then crop it to its ink and encode it:
 
        from PIL import Image
@@ -23,7 +23,7 @@ precision highp float;
 in vec2 v;out vec4 o;
 uniform vec2 px;
 #define AA ${AA}
-const float YAW=.38,PIT=.15,WIN=1.80,CUTV=.0625,CUTY=-.60;   // CUTV is a whole pixel row at any multiple of 16
+const float YAW=.38,PIT=.15,WIN=1.92,CUTV=.0625,CUTY=-.74;   // CUTV is a whole pixel row at any multiple of 16
 const vec2 CEN=vec2(.10,CUTY+(.5-CUTV)*WIN);
 const vec3 H=vec3(0);
 const vec3 EAR=vec3(.285,.432,-.225);
@@ -58,7 +58,7 @@ float neck(vec3 p){float d=sm(rc(p,vec3(.08,-.04,-.31),vec3(.17,-.85,-.26),.40,.
 float map(vec3 p){
   vec3 u=(p-H)*HR,q=snout(u),s=vec3(abs(u.x),u.yz);
   float d=sm(head(q)/1.09,ear(s),.09);
-  d=sm(d,neck(p),.09);m=0.;
+  d=sm(d,-sm(-neck(p),-ell(p,vec3(.13,-.12,-.16),vec3(.62,.56,.68)),.12),.09);m=0.;   // the chest closes in a soft curve, so it can sit anywhere
   float n=nose(q)/1.09;if(n<d){d=n;m=1.;}
   return d;}
 vec3 nor(vec3 p){vec2 e=vec2(.0012,0);return normalize(vec3(map(p+e.xyy)-map(p-e.xyy),map(p+e.yxy)-map(p-e.yxy),map(p+e.yyx)-map(p-e.yyx)));}
