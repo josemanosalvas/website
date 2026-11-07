@@ -47,7 +47,17 @@ FONTS = [
         "pin": {"wght": 400},
         "weight": "400",
         "style": "italic",
-        "text": "hello@josemanosalvas.ch HSáöo",  # email, letters on their way
+        "text": "hello@josemanosalvas.ch",  # email
+    },
+    {
+        # The word's italic letters, pinned to Literata's display size: a static cut, so the
+        # page and a canvas measuring it draw the very same letter.
+        "family": "Literata Display",
+        "file": "literata-italic-var.woff2",
+        "pin": {"wght": 400, "opsz": 72},
+        "weight": "400",
+        "style": "italic",
+        "text": "Háä",  # letters on their way
     },
     {
         "family": "B612 Mono",
@@ -63,7 +73,7 @@ FONTS = [
         "pin": None,
         "weight": "700",
         "style": "normal",
-        "text": "óä",  # letters on their way
+        "text": "óöé",  # letters on their way
     },
 ]
 

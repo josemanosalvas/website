@@ -10,7 +10,10 @@
        size = (360, round(dog.height * 360 / dog.width))
        dog.resize(size, Image.LANCZOS).save("src/shepherd.avif", quality=50, speed=0, subsampling="4:4:4")
 
-     Only the AVIF goes into the page. -->
+     That's one pose. The page plays all six, in a strip: render each with ?pose=0 to ?pose=5,
+     crop them all to the box that holds every pose, scale each to 300 px wide and lay them side
+     by side, left to right, then encode the strip the same way. Only the AVIF goes into the
+     page. -->
 <meta charset="utf-8">
 <title>White Swiss shepherd</title>
 <style>html { background: #888 } canvas { display: block; width: 768px; height: 768px }</style>
@@ -18,12 +21,24 @@
 <canvas id="c"></canvas>
 <script>
 const Q = new URLSearchParams(location.search), SIZE = +(Q.get('s') || 1536), AA = SIZE > 1000 ? 3 : 2;
+// The poses it acts out on the page, in order: at rest; hit, ears back and eyes squinting;
+// ears up; a curious tilt; looking up at the pole; flung, ears blown back. Head turn and nod
+// in radians, tilt, ears back, and how far the eyes close. ?pose=N renders one.
+const POSES = [
+  { yaw: .38, nod: .15, tilt: 0, ears: 0, shut: 0 },
+  { yaw: .32, nod: .06, tilt: -.06, ears: .42, shut: .45 },
+  { yaw: .42, nod: .12, tilt: .04, ears: -.14, shut: 0 },
+  { yaw: .50, nod: .06, tilt: .24, ears: -.06, shut: .1 },
+  { yaw: .52, nod: -.22, tilt: .08, ears: -.1, shut: 0 },
+  { yaw: .44, nod: -.06, tilt: -.18, ears: .55, shut: .25 },
+];
+const POSE = POSES[+(Q.get('pose') || 0)];
 const FS=`#version 300 es
 precision highp float;
 in vec2 v;out vec4 o;
 uniform vec2 px;
 #define AA ${AA}
-const float YAW=.38,PIT=.15,WIN=1.92,CUTV=.0625,CUTY=-.74;   // CUTV is a whole pixel row at any multiple of 16
+const float YAW=${POSE.yaw.toFixed(3)},PIT=${POSE.nod.toFixed(3)},TILT=${POSE.tilt.toFixed(3)},EARS=${POSE.ears.toFixed(3)},SHUT=${POSE.shut.toFixed(3)},WIN=1.92,CUTV=.0625,CUTY=-.74;   // CUTV is a whole pixel row at any multiple of 16
 const vec2 CEN=vec2(.10,CUTY+(.5-CUTV)*WIN);
 const vec3 H=vec3(0);
 const vec3 EAR=vec3(.285,.432,-.225);
@@ -40,7 +55,7 @@ float rc(vec3 p,vec3 a,vec3 b,float r1,float r2){ // exact round cone
   return (sqrt(x2*a2*il2)+y*rr)*il2-r1;}
 float ves(vec2 p,float r,float d){p=abs(p);float b=sqrt(r*r-d*d);return ((p.y-b)*d>p.x*b)?length(p-vec2(0,b)):length(p-vec2(-d,0))-r;} // exact gothic arch, tips on y
 mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,s,-s,c);}
-vec3 earq(vec3 s){vec3 q=s-EAR;q.xy=rot(.235)*q.xy;q.xz=rot(-.34)*q.xz;q.yz=rot(.10)*q.yz;return q;}
+vec3 earq(vec3 s){vec3 q=s-EAR;q.xy=rot(.235)*q.xy;q.xz=rot(-.34)*q.xz;q.yz=rot(.10+EARS)*q.yz;return q;}
 float eart(vec3 q){return ves(q.xy,.50,.335)-.05;}                    // the ear's outline: wide base, soft tip
 vec3 cup(vec3 q){float x=clamp(q.x,-.28,.28);q.z-=.75*x*x;return q;}  // cupped; clamped, so the shear never stretches space past 1.09
 float ear(vec3 s){vec3 q=cup(earq(s));
@@ -86,7 +101,7 @@ vec4 shade(vec2 uv){
   if(id<.5){
     // eye: a dark almond decal with a crisp catchlight
     vec3 N=normalize(vec3(.28,.20,.94)),T=normalize(vec3(N.z,0,-N.x)),B=cross(N,T),r=vec3(abs(q.x),q.yz)-EYE;
-    vec2 e=rot(-.20)*vec2(dot(r,T),dot(r,B));if(q.x<0.)e.x*=.80;
+    vec2 e=rot(-.20)*vec2(dot(r,T),dot(r,B));if(q.x<0.)e.x*=.80;e.y/=max(1.-SHUT,.12);
     float ed=ves(e.yx,.068,.012)-.006;
     if(q.z>.1&&dot(n,N)>.15){
       float bw=exp(-pow((e.x+.012)/.08,2.)-pow((e.y-.074)/.028,2.));lit*=mix(vec3(1.),vec3(.89,.89,.93),bw);
@@ -106,7 +121,8 @@ vec4 shade(vec2 uv){
 void main(){
   HR=mat3(1);
   float a=YAW,c=PIT;vec3 F=vec3(-sin(a),0,cos(a)),R=vec3(cos(a),0,sin(a)),U=vec3(0,1,0);
-  HR=mat3(R,U*cos(c)+F*sin(c),F*cos(c)-U*sin(c));
+  vec3 V=U*cos(c)+F*sin(c),W=F*cos(c)-U*sin(c);
+  HR=mat3(R*cos(TILT)+V*sin(TILT),V*cos(TILT)-R*sin(TILT),W);
   vec3 acc=vec3(0);float al=0.;
   for(int j=0;j<AA;j++)for(int i=0;i<AA;i++){vec4 c=shade(v+px*((vec2(i,j)+.5)/float(AA)-.5));acc+=c.rgb*c.a;al+=c.a;}
   o=al>0.?vec4(acc/al,al/float(AA*AA)):vec4(0);

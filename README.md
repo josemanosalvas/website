@@ -6,9 +6,9 @@ design system: its faces and colours, with a composition of its own.
 ## What's here
 
 ```
-index.html        built and minified: the only file visitors load (44 KB, 30 KB gzipped)
+index.html        built and minified: the only file visitors load (69 KB, 48 KB gzipped)
 src/index.html    the readable source
-src/shepherd.avif the white Swiss shepherd, embedded by the build
+src/shepherd.avif the white Swiss shepherd, six poses in a strip, embedded by the build
 tools/build.py    builds index.html from src/
 tools/shepherd.html  the 3D model the shepherd is rendered from
 OFL.txt           licence for the embedded fonts
@@ -35,37 +35,39 @@ The build is deterministic: the same source gives the same bytes.
 
 ## The greeting
 
-Only the greeting moves, alternating between Hola and Salü every 2.8 s, and each change is
-one quick gesture of about 1.3 s. The `l` never changes: it's the third letter of both words,
-so the word never leaves.
+Only the greeting moves, alternating between Hola and Salü every 1.57 s. Each change is one
+quick gesture of about a second, then the word rests for half a second. The `l` never changes
+and never moves: it's the third letter of both words, so the word never leaves.
 
-It's two bursts and an accent. First a run of hard cuts two frames apart: the second letter
-passes through glyphs from its own language (ñ, á, ó on the way to Hola; the Swiss cross, ö, ä
-on the way to Salü) in the page's other two faces, the first letter goes to Literata italic
-and is then poured in lacquer of its flag's colour, and an animal lands in the last slot, the
-Galápagos tortoise or the white Swiss shepherd. Then the `l` shoots up into a flagpole and
-knocks the animal out, the first letter cuts to ink and the last letter drops in. Only then,
-over the whole word, the flag comes out of the pole. It stays a moment, goes back in, and the
-pole drops.
+It's two bursts and an accent. First, hard cuts two frames apart, often two letters at once.
+The second letter passes through glyphs from its own language (ñ, á, ó on the way to Hola; the
+Swiss cross, ö, ä on the way to Salü) in the page's other two faces. The first letter goes to
+Literata italic, then is poured in lacquer of its flag's colour. An animal lands in the last
+slot: the Galápagos tortoise, or the white Swiss shepherd, which acts through six poses
+rendered from its 3D model. Then the `l` shoots up into a flagpole and flings the animal away,
+and on its last frame the first letter cuts to ink and the last letter lands. The whole word
+holds for a beat, then the flag eases out of the pole, snaps once in the wind, goes back in,
+and the pole drops.
 
 What goes with each word is the `greetings` list at the foot of `src/index.html`, and all the
 timing is the score under it, on one clock of 60 fps frames, so a display at any rate lands on
-the same beats. Letters are placed by transforms, so nothing reflows. Each state of the word is
-set tight from the widths of the glyphs it shows, so the word stays one block on the way, and
-comes to rest exactly where plain text would set it. The letters stay in their slots after the
-first change, so nothing is re-rendered when a word comes to rest.
+the same beats. Successive changes to the same word take turns between two sets of glyphs and,
+for Hola, two lacquer colours, so the fourth change isn't the second again. Letters are placed
+by transforms, so nothing reflows. Each glyph on the way is sized to fill the letter it stands
+in for and set by its ink at the finished word's own gaps, so every state of the word keeps the
+word's spacing and the margin barely moves. The word comes to rest exactly where plain text
+would set it.
 
-The liquid letter isn't an image or a video. It comes from Archivo's own outline: the page draws
-the letter, solves the shape a balloon would take inside that outline and lights it in WebGL,
-in the page's own Azul or Ají, so dark mode gets Guayas and its lighter red. Anything wider or
-taller than today's needs checking: `--hello` keeps the word on screen, the pole measures the
-room above the word so the flag can't reach the top of the window, and the `nudge` values are
-set by eye for these two words.
+The liquid letter isn't an image or a video. It comes from Archivo's own outline: the page
+draws the letter, blurs it into a rounded tube and lights it in WebGL, in Mitad's Azul and Ají
+at full strength in both themes. Anything wider or taller than today's needs checking:
+`--hello` keeps the word on screen, the pole measures the room above the word so the flag
+can't reach the top of the window, and the `nudge` values are set by eye for these two words.
 
 The flags and the tortoise are the visitor's own emoji, so Apple devices show Apple's. Each is
 drawn once to a canvas and cropped to its ink, which puts it in the same place on every system.
 Chrome and Edge on Windows have no flag emoji, so there the flag is drawn from the rectangles in
-`greetings`. No system has a white Swiss shepherd, so that one is a small render:
+`greetings`. No system has a white Swiss shepherd, so that one is a strip of renders:
 `tools/shepherd.html` is the model and says how to make a new `src/shepherd.avif`.
 
 Without WebGL the letters still change, with no liquid, animal or flag. Without JS or with
