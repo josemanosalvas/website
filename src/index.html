@@ -26,7 +26,7 @@
     --serif: 'Literata', 'Georgia', serif;
     --mono: 'B612 Mono', 'Courier New', monospace;
     --gutter: clamp(1.5rem, 5vw, 4.5rem);
-    --hello: min(33vw, 40svh, 20rem);   /* "Salut" must fit the width */
+    --hello: min(33vw, 40svh, 20rem);
     color-scheme: light;
   }
 
@@ -75,28 +75,16 @@
     padding-top: max(var(--gutter), env(safe-area-inset-top));
   }
 
-  /* The word's baseline is the horizon and anything below it is cut, so
-     each greeting rises out of it and sets back into it. */
+  /* The greeting's baseline sits on the middle of the screen. */
   h1 {
     font-size: var(--hello);
+    font-weight: 800;
     line-height: 1;
     letter-spacing: -0.045em;
     margin-left: -0.06em;            /* optical: pull the stem to the margin */
     height: 0.8em;                   /* ascent only: baseline = bottom edge */
-    clip-path: inset(-1em -1em -0.025em -1em);   /* keep round overshoot whole */
     white-space: nowrap;
   }
-
-  .word {
-    display: inline-block;
-    font-weight: 800;
-  }
-
-  .word.set  { animation: set 520ms cubic-bezier(.55, 0, .8, .2) forwards; }
-  .word.rise { animation: rise 900ms cubic-bezier(.16, .84, .24, 1) both; }
-
-  @keyframes set  { to   { transform: translateY(105%); } }
-  @keyframes rise { from { transform: translateY(105%); } }
 
   /* ---------- below the horizon ---------- */
   .south {
@@ -150,9 +138,6 @@
     white-space: nowrap;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .word.set, .word.rise { animation: none; }
-  }
 </style>
 <script>
   /* Start decoding all three fonts now and reveal the page in one frame when
@@ -171,7 +156,7 @@
 </head>
 <body>
   <header class="north">
-    <h1><span class="word" lang="es">Hola</span><span class="visually-hidden">, I’m José.</span></h1>
+    <h1><span lang="es">Hola</span><span class="visually-hidden">, I’m José.</span></h1>
   </header>
 
   <main class="south">
@@ -182,49 +167,5 @@
     <p class="elsewhere"><a href="https://github.com/josemanosalvas">GitHub</a></p>
   </main>
 
-<script>
-  (() => {
-    const greetings = [
-      { word: 'Hola', lang: 'es' },
-      { word: 'Salut', lang: 'fr' },
-      { word: 'Hi', lang: 'en' },
-      { word: 'Salü', lang: 'gsw' },
-    ];
-    const word = document.querySelector('.word');
-    const heading = document.querySelector('h1');
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-    let current = 0, timer = null, busy = false;
-
-    function go(i) {
-      if (busy) return;
-      current = i;
-      busy = true;
-      word.className = 'word set';
-      setTimeout(() => {
-        word.textContent = greetings[i].word;
-        word.lang = greetings[i].lang;
-        word.className = 'word rise';
-        setTimeout(() => { word.className = 'word'; busy = false; }, 900);
-      }, 520);
-    }
-
-    function start() {
-      if (timer || reduce.matches || document.hidden) return;
-      timer = setInterval(() => go((current + 1) % greetings.length), 3200);
-    }
-    function stop() { clearInterval(timer); timer = null; }
-
-    heading.addEventListener('mouseenter', stop);
-    heading.addEventListener('mouseleave', start);
-    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
-
-    // First light: the opening greeting rises once on load.
-    if (!reduce.matches) {
-      word.className = 'word rise';
-      busy = true;
-      setTimeout(() => { word.className = 'word'; busy = false; start(); }, 900);
-    }
-  })();
-</script>
 </body>
 </html>

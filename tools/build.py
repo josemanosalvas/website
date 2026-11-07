@@ -39,7 +39,7 @@ FONTS = [
         "pin": None,
         "weight": "100 900",
         "style": "normal",
-        "text": "Hola Salut Hi Salü, I’m José.",  # greetings, name, hidden heading
+        "text": "Hola, I’m José.",  # greeting, name, hidden heading
     },
     {
         "family": "Literata",
@@ -70,10 +70,9 @@ def font_face(font):
         tt = instancer.instantiateVariableFont(tt, font["pin"])
     opts = subset.Options()
     opts.layout_features = ["kern"]   # nothing else applies to this text
-    opts.name_IDs = []                # family names come from @font-face
-    opts.name_languages = []
-    opts.name_legacy = False
-    opts.drop_tables += ["STAT"]
+    # Keep the name table (fontTools' default IDs plus every ID fvar and STAT
+    # point to) and STAT. Chrome renders fonts without them, but Safari, on
+    # every iOS browser, did not load them.
     opts.flavor = "woff2"             # hinting is kept: B612 needs it at 12px on Windows
     sub = subset.Subsetter(opts)
     sub.populate(text=font["text"])

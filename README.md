@@ -25,7 +25,7 @@ pip install fonttools brotli minify-html     # Node is also needed, for esbuild
 python3 tools/build.py                       # or pass the path to design-system/fonts
 ```
 
-The fonts only contain the characters on the page. If you change the greetings, the name,
+The fonts only contain the characters on the page. If you change the greeting, the name,
 the email or the GitHub label, update the `text` entries in `tools/build.py` first, or new
 letters will fall back to Helvetica, Georgia or Courier.
 
