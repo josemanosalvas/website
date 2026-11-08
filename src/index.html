@@ -251,7 +251,7 @@
       },
       {
         word: 'Salü', steps: [[['+', 'r x'], ['ä', 'i r'], ['ö', 'm r']], [['ö', 'm r'], ['ä', 'i r'], ['+', 'r x']]], tail: ['é', 'm r'], slant: 'H', paint: '--aji', glow: '--aji',
-        mark: 'shepherd.avif', poses: 4, act: [[6, 1], [13, 0], [17, 1], [40, 0], [43, 1], [48, 2], [52, 3]], flag: '🇨🇭', fly: .23, nudge: [.024, .0527, .0904, .0684],
+        mark: 'shepherd.avif', poses: 4, act: [[6, 1], [13, 0], [17, 1], [40, 0], [43, 1], [48, 2], [53, 3]], flag: '🇨🇭', fly: .23, nudge: [.024, .0527, .0904, .0684],
         rects: [[0, 0, 2, 2, '#D91E36'], [.8, .35, .4, 1.3, '#FFF'], [.35, .8, 1.3, .4, '#FFF']],
       },
     ];
@@ -282,14 +282,14 @@
     const unbuild = [44, 58];                     // and is un-built into ink along its strokes
     const glow = [18, 78];                        // the second letter comes back glowing, and the glow fades
     const aside = [2, 7, 8, 22];                  // the first letter steps aside for the italic H, and glides home
-    const land = 55;                              // the last letter lands
-    const raise = [52, 60], launch = [52, 56];    // the l shoots up and flings the animal out of its slot
-    const open = [55, 76];                        // the flag unfurls from behind the pole as the word lands
-    const close = [98, 103], lower = [101, 113];  // then goes back in, quickly, as the pole drops
+    const land = 64;                              // the last letter lands, once the animal has cleared it
+    const raise = [52, 62], launch = [53, 67];    // the l shoots up, and a frame later flings the animal away
+    const open = [64, 85];                        // the flag unfurls from behind the pole as the word lands
+    const close = [107, 112], lower = [110, 122]; // then goes back in, quickly, as the pole drops
 
     // A visit opens with two changes, to Salü and back, each word held whole for as long as a
     // change takes, and then the word stays. Pointing at the word, or tapping it, plays one more.
-    const every = 3800, opening = 2;
+    const every = 4000, opening = 2;
 
     // The score is written at 60 fps and played a quarter slower, so every beat can be seen.
     const tempo = 1.25;
@@ -876,14 +876,14 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
             for (const [f, k] of g.act ?? []) if (t >= f) pose = k;
             const look = g.emoji[pose] ?? g.emoji[0];
             const go = span(t, launch), q = span(t, peek) - 1, brake = bump(t - peek[1] + 2, 6);
-            const squash = (1 - .1 * bump(t - launch[0] + 3, 3)) * (1 - .06 * brake);
-            const s = (1 + .03 * Math.sin(t * .4)) * (1 - smooth(span(go, [.3, 1])));
+            const squash = (1 - .1 * bump(t - launch[0] + 6, 6)) * (1 - .06 * brake);
+            const s = (1 + .03 * Math.sin(t * .4)) * (1 - smooth(span(go, [.55, 1])));
             const tall = beast / (box[3] - box[1]) * px * s * squash, w = tall / squash * look.aspect * (2 - squash);
-            const x = (foot - travel * -(2.2 * q * q * q + 1.2 * q * q) + .32 * go + .22 * go * go + side) * px;
+            const x = (foot - travel * -(2.2 * q * q * q + 1.2 * q * q) + .45 * go + .2 * go * go + side) * px;
             const y = base - (.07 * bump(t - perk[0], 5) + .07 * bump(t - perk[1], 5) + fling * out(go) + .18 * go * go) * px;
             const left = x - w * (box[0] + box[2]) / 2;
             put(cloth, look.tex, left, y - tall * (look.ink[3] + .15), w, tall * 1.3);   // each pose stands on its own foot
-            gl.uniform1f(cloth.R, .45 * go);
+            gl.uniform1f(cloth.R, 3 * smooth(go));   // half a turn, so the throw reads
             gl.uniform1f(cloth.U, 1);
             gl.uniform1f(cloth.A, 0);
             gl.uniform1f(cloth.W, 0);
