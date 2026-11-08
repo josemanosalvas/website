@@ -35,12 +35,11 @@ The build is deterministic: the same source gives the same bytes.
 
 ## The greeting
 
-Only the greeting moves. A visit opens with two changes, to Salü and back to Hola, a change and
-a rest apart, and then the word stays: it's all over within five seconds of the first move.
-Pointing at the word, or tapping it, plays one more. The `l` never changes and never moves: it's
+Only the greeting moves. A visit opens with two changes, to Salü and back to Hola, 3.8 s apart,
+and then the word stays. Pointing at the word, or tapping it, plays one more. The `l` never changes and never moves: it's
 the third letter of both words, so the word never leaves.
 
-Each change takes about 1.7 s and runs fast and then slower, the way a thrown thing settles,
+Each change takes about 2.4 s and runs fast and then slower, the way a thrown thing settles,
 like the title of Apple's Mac mini page. First a burst of hard cuts, one letter at a time, two
 frames apart. The second letter passes through glyphs from its own language (ñ, á, ó on the way
 to Hola; the Swiss cross, ä, ö on the way to Salü) in the page's other two faces, at the word's
@@ -49,15 +48,17 @@ it inflates in clay, in a pastel of the word's colour, turns to glossy lacquer o
 un-built along its own strokes, a wireframe running ahead of the ink letter it uncovers. When a
 glyph on the way needs more room, the first letter steps aside to make it. Glyphs change on a
 cut, but the spacing slides to its new places over a few frames. The animal slides out from
-behind the `l`, brakes and waits in the last letter's place: the Galápagos tortoise, or the
-white Swiss shepherd, which acts through four poses rendered from its 3D model. The second
+behind the `l`, brakes and takes the last letter's place for about a second, hopping twice:
+the Galápagos tortoise, or the white Swiss shepherd, which acts through four poses rendered
+from its 3D model, smiling, blinking and looking up at the pole. The second
 letter comes back with a halo in the word's colour. Then the `l` shoots up into a flagpole and
 flings the animal away, the last letter lands, and the flag unfurls from behind the pole. The
 halo fades, the flag goes back in, and the pole drops.
 
 What goes with each word is the `greetings` list at the foot of `src/index.html`, and all the
-timing is the score under it, on one clock of 60 fps frames counted from each change's first
-frame, so a display at any rate lands on the same beats. Successive changes to the same word
+timing is the score under it, written in 60 fps frames and played at `tempo` (a quarter
+slower), counted from each change's first frame, so a display at any rate lands on the same
+beats. Successive changes to the same word
 take turns between two sets of glyphs, so the fourth change isn't the second again. Letters are
 placed by transforms, so nothing reflows. Each glyph on the way is sized to fill the letter it
 stands in for, never larger than its face's own size, and set by its ink at the finished word's

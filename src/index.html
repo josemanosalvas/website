@@ -251,7 +251,7 @@
       },
       {
         word: 'Salü', steps: [[['+', 'r x'], ['ä', 'i r'], ['ö', 'm r']], [['ö', 'm r'], ['ä', 'i r'], ['+', 'r x']]], tail: ['é', 'm r'], slant: 'H', paint: '--aji', glow: '--aji',
-        mark: 'shepherd.avif', poses: 4, act: [[6, 1], [13, 0], [17, 1], [30, 2], [34, 3]], flag: '🇨🇭', fly: .23, nudge: [.024, .0527, .0904, .0684],
+        mark: 'shepherd.avif', poses: 4, act: [[6, 1], [13, 0], [17, 1], [40, 0], [43, 1], [48, 2], [52, 3]], flag: '🇨🇭', fly: .23, nudge: [.024, .0527, .0904, .0684],
         rects: [[0, 0, 2, 2, '#D91E36'], [.8, .35, .4, 1.3, '#FFF'], [.35, .8, 1.3, .4, '#FFF']],
       },
     ];
@@ -277,20 +277,22 @@
       [18, 1, second, ''],
       [land, 3, last, ''],
     ];
-    const peek = [6, 14], perk = [21, 26];        // the animal slides out from behind the l, and hops once
-    const coat = [8, 40], gloss = 16;             // the first letter is a model in clay, then lacquer,
-    const unbuild = [26, 40];                     // and is un-built into ink along its strokes
-    const glow = [18, 60];                        // the second letter comes back glowing, and the glow fades
+    const peek = [6, 14], perk = [21, 36];        // the animal slides out from behind the l, and hops twice
+    const coat = [8, 58], gloss = 16;             // the first letter is a model in clay, then lacquer,
+    const unbuild = [44, 58];                     // and is un-built into ink along its strokes
+    const glow = [18, 78];                        // the second letter comes back glowing, and the glow fades
     const aside = [2, 7, 8, 22];                  // the first letter steps aside for the italic H, and glides home
-    const land = 37;                              // the last letter lands
-    const raise = [34, 42], launch = [34, 38];    // the l shoots up and flings the animal out of its slot
-    const open = [37, 58];                        // the flag unfurls from behind the pole as the word lands
-    const close = [80, 85], lower = [83, 95];     // then goes back in, quickly, as the pole drops
+    const land = 55;                              // the last letter lands
+    const raise = [52, 60], launch = [52, 56];    // the l shoots up and flings the animal out of its slot
+    const open = [55, 76];                        // the flag unfurls from behind the pole as the word lands
+    const close = [98, 103], lower = [101, 113];  // then goes back in, quickly, as the pole drops
 
-    // A visit opens with two changes, to Salü and back, a change and a rest apart, and then the
-    // word stays. That's all over within five seconds of the first move. Pointing at the word, or
-    // tapping it, plays one more.
-    const every = 3000, opening = 2;
+    // A visit opens with two changes, to Salü and back, each word held whole for as long as a
+    // change takes, and then the word stays. Pointing at the word, or tapping it, plays one more.
+    const every = 3800, opening = 2;
+
+    // The score is written at 60 fps and played a quarter slower, so every beat can be seen.
+    const tempo = 1.25;
 
     const word = document.querySelector('.word');
     const heading = document.querySelector('h1');
@@ -319,13 +321,13 @@ void main(){v=p;vec2 d=mat2(cos(R),sin(R),-sin(R),cos(R))*((p-.5)*Q.zw),c=(Q.xy+
     // matte, in a pastel of its colour, lit softly from the upper left. Lacquer: a soft room in
     // the letter's own colour, a sharp key light with a soft halo, a strip, a top light and a
     // rim, all shades of one hue. M takes it from clay to lacquer. P inflates it and L tilts it,
-    // so the light travels; its slope comes from its height, in the alpha channel. Then the
-    // letter itself, in ink K, appears behind it, G of the way in, and a front runs along the
-    // letter's strokes, F of the way: behind it the model is gone, and just behind it the tube
-    // is a fading wireframe, B rings across the stroke and lines along it every 30° around it.
+    // so the light travels; its slope comes from its height, in the alpha channel. Then a front
+    // runs along the letter's strokes, F of the way: behind it the model is gone and the letter
+    // itself is ink, K, and just behind it the tube is a fading wireframe, B rings across the
+    // stroke and lines along it every 30° around it, none on the crest.
     const liquidShader = `#version 300 es
 precision highp float;
-uniform sampler2D T;uniform float P,M,F,B,G;uniform vec2 L;uniform vec3 I[3],K;in vec2 v;out vec4 o;
+uniform sampler2D T;uniform float P,M,F,B;uniform vec2 L;uniform vec3 I[3],K;in vec2 v;out vec4 o;
 float l(vec3 r,vec3 d,float s){return pow(max(dot(r,normalize(d)),0.),s);}
 float grid(float x){float f=abs(fract(x)-.5),w=fwidth(x);return smoothstep(.5-w*1.4,.5-w*.3,f);}
 float cover(float x){float w=fwidth(x)*.5;return smoothstep(.5-w,.5+w,x);}
@@ -337,8 +339,8 @@ c=mix(c,I[2],pow(1.-n.z,2.6)*.85);c+=1.1*l(r,vec3(-.32,-.42,.85),110.)+.18*l(r,v
 float d=max(dot(n,normalize(vec3(-.35,-.55,.76))),0.);vec3 p=mix(I[1],vec3(1),.55),m=p*(.64+.44*d)+.1*l(r,vec3(-.32,-.42,.85),9.);
 c=mix(mix(m,p*.8,pow(1.-n.z,2.)*.3),min(c,vec3(1)),M);
 float s=t.b,e=fwidth(s)+.002,b=.3,h=acos(normalize(vec3(g,1.)).z);
-vec3 f=mix(vec3(.93,.93,.94)*(.8+.22*d),vec3(.42,.42,.46),max(grid(s*B),grid(h*1.9))*.9)*mix(.74,1.,smoothstep(0.,.7,n.z));
-float on=smoothstep(F-e,F+e,s),wire=smoothstep(F-b,F-b*.35,s)*(1.-on),at=cover(t.g)*(on+wire),ai=cover(t.r)*G;
+vec3 f=mix(vec3(.93,.93,.94)*(.8+.22*d),vec3(.42,.42,.46),max(grid(s*B),grid(h*1.9+.5))*.9)*mix(.74,1.,smoothstep(0.,.7,n.z));
+float on=smoothstep(F-e,F+e,s),wire=smoothstep(F-b,F-b*.35,s)*(1.-on),at=cover(t.g)*(on+wire),ai=cover(t.r)*(1.-on);
 c=(on*c+wire*f)/max(on+wire,1e-4);
 o=vec4(min(c,vec3(1))*at+K*ai*(1.-at),at+ai*(1.-at));}`;
 
@@ -362,7 +364,7 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
       gl.bindAttribLocation(p, 0, 'p');
       gl.linkProgram(p);
       const u = { p };
-      for (const n of 'QSRPLIUAWEMFBKG') u[n] = gl.getUniformLocation(p, n);
+      for (const n of 'QSRPLIUAWEMFBK') u[n] = gl.getUniformLocation(p, n);
       return u;
     }
 
@@ -478,12 +480,26 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
           if (ink[j] >= .5 && d + w < along[j]) { along[j] = d + w; push(d + w, j); }
         }
       }
+      // Then it's relaxed through the letter, each point taking the average of its neighbours
+      // inside it, for about as many passes as it takes to cross a stroke, so every ring settles
+      // square across its stroke and nothing kinks where strokes meet.
+      const way = along.map((d) => (d < Infinity ? d / far : 0));
+      for (let k = 0; k < 72; k++) {
+        if (k % 24 === 0) await breath();
+        for (let i = N; i < N * N - N; i++) {
+          if (along[i] === Infinity) continue;
+          let sum = 0, count = 0;
+          for (const j of [i - 1, i + 1, i - N, i + N]) if (along[j] < Infinity) { sum += way[j]; count++; }
+          if (count) way[i] = sum / count;
+        }
+      }
       await breath();
       // Outside the letter, the nearest inside value, so the edge pixels blend cleanly.
-      const reach = blur(along.map((d) => (d < Infinity ? d / far : 0)), 3), weight = blur(along.map((d) => (d < Infinity ? 1 : 0)), 3);
-      // Stored as the letter's outline, the model's outline, the way along, and the model's height.
+      const reach = blur(way, 3), weight = blur(along.map((d) => (d < Infinity ? 1 : 0)), 3);
+      // Stored as the letter's outline, the model's outline (grown by the part of a texel the
+      // rounding leaves it inside the letter's straight edges), the way along, and the model's height.
       const field = new Float32Array(N * N * 4);
-      for (let i = 0; i < N * N; i++) field.set([.5 + outline[i] / 8, .5 + round[i] / 8, weight[i] > 0 ? reach[i] / weight[i] : 1, z[i]], i * 4);
+      for (let i = 0; i < N * N; i++) field.set([.5 + outline[i] / 8, .5 + (round[i] + .6) / 8, weight[i] > 0 ? reach[i] / weight[i] : 1, z[i]], i * 4);
       return {
         rings: 3 * far / R,                           // rings along the letter, about as far apart as its lines around
         tex: texture(() => {
@@ -754,7 +770,7 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
       // How far the first letter has stepped aside, in em: .1em, or less on a narrow window, so it
       // always keeps 16 px from the window's edge.
       let step = 0;
-      const stride = Math.max(0, Math.min(.1, (heading.getBoundingClientRect().left - 16) / em + ink(0) - .1));
+      const stride = Math.max(0, Math.min(.1, (heading.getBoundingClientRect().left - 16) / em + ink(0)));
       const where = (n) => {
         const [w, , fixed] = state[n];
         if (n === 0) return (fixed !== null ? fixed : ink(0) + w / 2) - step;
@@ -788,10 +804,10 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
       const last = lower[1] + 4, eased = from.x.slice();
       let first = null, then = null;
       const tick = (now) => {
-        // Frames are counted from the change's first frame, a quarter frame early, so every
-        // beat lands on the frame it's written for, at any refresh rate.
+        // Frames are counted from the change's first frame, at the score's tempo, a quarter frame
+        // early, so every beat lands on a whole frame at any refresh rate.
         first ??= now;
-        const t = (now - first) * .06 + .25;
+        const t = (now - first) * .06 / tempo + .25;
         while (notes.length && notes[0][0] <= t) {
           const [beat, n, glyph, faces] = notes.shift(), k = sizes.shift();
           const face = faces.split(' '), em0 = (face.includes('i') ? .94 : face.includes('m') ? .9 : 1) * k;
@@ -844,16 +860,14 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
             gl.uniform2f(liquid.L, mix(.22, -.3, smooth(span(t, coat))), mix(.12, -.06, smooth(span(t, coat))));
             gl.uniform3fv(liquid.I, [...hue.map((c) => c * .7), ...hue, ...hue.map((c) => mix(c, 1, .5))]);
             gl.uniform1f(liquid.M, t >= gloss ? 1 : 0);
-            const front = mix(-.02, 1.32, smooth(span(t, unbuild)));
-            gl.uniform1f(liquid.F, front);
+            gl.uniform1f(liquid.F, mix(-.02, 1.32, smooth(span(t, unbuild))));
             gl.uniform1f(liquid.B, g.letter.rings);
             gl.uniform3fv(liquid.K, dark);
-            gl.uniform1f(liquid.G, front > .03 ? 1 : 0);   // the ink letter cuts in as the un-build shows
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
           }
 
           // The animal slides out from behind the l, overshoots a little and brakes into its slot,
-          // facing the l, and hops once while the model is un-built. It gathers itself, and the l
+          // facing the l, and acts: it hops, blinks, hops again, and looks up at the pole. Then the l
           // flings it up and away with a spin, shrinking into the distance as the last letter
           // lands. It's squashed from the foot of its ink, so it never leaves the baseline until
           // it's flung.
@@ -866,7 +880,7 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
             const s = (1 + .03 * Math.sin(t * .4)) * (1 - smooth(span(go, [.3, 1])));
             const tall = beast / (box[3] - box[1]) * px * s * squash, w = tall / squash * look.aspect * (2 - squash);
             const x = (foot - travel * -(2.2 * q * q * q + 1.2 * q * q) + .32 * go + .22 * go * go + side) * px;
-            const y = base - (.07 * bump(t - perk[0], perk[1] - perk[0]) + fling * out(go) + .18 * go * go) * px;
+            const y = base - (.07 * bump(t - perk[0], 5) + .07 * bump(t - perk[1], 5) + fling * out(go) + .18 * go * go) * px;
             const left = x - w * (box[0] + box[2]) / 2;
             put(cloth, look.tex, left, y - tall * (look.ink[3] + .15), w, tall * 1.3);   // each pose stands on its own foot
             gl.uniform1f(cloth.R, .45 * go);
