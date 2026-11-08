@@ -1,19 +1,19 @@
 <!doctype html>
-<!-- The white Swiss shepherd that src/shepherd.avif is rendered from: a bust made of
-     signed distance fields, ray-marched once, in the manner of an emoji. Eyes and
-     inner ears are painted in the shading, and the chest closes in a soft curve, so there's
-     no cut to show. Open this in a browser and press Save for a 1536 px PNG with transparency,
-     then crop it to its ink and encode it:
+<!-- The white Swiss shepherd that src/shepherd.avif is rendered from: a head made of signed
+     distance fields, ray-marched once, in the manner of Apple's animal emoji faces: a head only,
+     so the face fills the glyph. A full throat closes it under the jaw in one clean curve, so
+     there's no cut to show. Eyes, lips, nostrils and inner ears are painted in the shading. Open this in a browser and press
+     Save for a 1536 px PNG with transparency, then crop it to its ink and encode it:
 
        from PIL import Image
        dog = Image.open("shepherd.png"); dog = dog.crop(dog.getbbox())
-       size = (360, round(dog.height * 360 / dog.width))
+       size = (300, round(dog.height * 300 / dog.width))
        dog.resize(size, Image.LANCZOS).save("src/shepherd.avif", quality=50, speed=0, subsampling="4:4:4")
 
-     That's one pose. The page plays all six, in a strip: render each with ?pose=0 to ?pose=5,
-     crop them all to the box that holds every pose, scale each to 300 px wide and lay them side
-     by side, left to right, then encode the strip the same way. Only the AVIF goes into the
-     page. -->
+     That's one pose. The page plays all four, in a strip: render each with ?pose=0 to ?pose=3
+     (?s= sets the size, 1536 by default), crop them all to the one box that holds every pose, so
+     the head doesn't jump between them, scale each to 300 px wide and lay them side by side, left
+     to right, then encode the strip the same way. Only the AVIF goes into the page. -->
 <meta charset="utf-8">
 <title>White Swiss shepherd</title>
 <style>html { background: #888 } canvas { display: block; width: 768px; height: 768px }</style>
@@ -21,30 +21,32 @@
 <canvas id="c"></canvas>
 <script>
 const Q = new URLSearchParams(location.search), SIZE = +(Q.get('s') || 1536), AA = SIZE > 1000 ? 3 : 2;
-// The poses it acts out on the page, in order: at rest; hit, ears back and eyes squinting;
-// ears up; a curious tilt; looking up at the pole; flung, ears blown back. Head turn and nod
-// in radians, tilt, ears back, and how far the eyes close. ?pose=N renders one.
+// The four poses it acts out on the page, in order: it lands, hit, eyes squeezed shut and ears
+// pressed back; happy, ears up, mouth open and tongue out; looking up at the pole, nose to the
+// upper left; flung, ears blown back and eyes wide. Each faces left, in a three-quarter view.
+// Head turn, nod (up is negative) and tilt in radians; ears back and splayed out; eyes shut
+// (1 squeezes them into chevrons), wide, and how far they look up; mouth open in radians, and how
+// far the tongue comes out; and squash, below 1 flat and above 1 stretched. ?pose=N renders one.
 const POSES = [
-  { yaw: .38, nod: .15, tilt: 0, ears: 0, shut: 0 },
-  { yaw: .32, nod: .06, tilt: -.06, ears: .42, shut: .45 },
-  { yaw: .42, nod: .12, tilt: .04, ears: -.14, shut: 0 },
-  { yaw: .50, nod: .06, tilt: .24, ears: -.06, shut: .1 },
-  { yaw: .52, nod: -.22, tilt: .08, ears: -.1, shut: 0 },
-  { yaw: .44, nod: -.06, tilt: -.18, ears: .55, shut: .25 },
+  { yaw: .60, nod: .16, tilt: -.10, ears: .95, splay: .45, shut: 1, wide: 0, look: 0, mouth: 0, tongue: 0, squash: .87 },
+  { yaw: .62, nod: .02, tilt: .12, ears: -.12, splay: -.04, shut: 0, wide: 0, look: 0, mouth: .38, tongue: 1, squash: 1 },
+  { yaw: .78, nod: -.50, tilt: .10, ears: -.40, splay: 0, shut: 0, wide: 0, look: .018, mouth: 0, tongue: 0, squash: 1 },
+  { yaw: .58, nod: -.16, tilt: -.42, ears: .95, splay: -.32, shut: 0, wide: 1, look: 0, mouth: .22, tongue: 0, squash: 1.10 },
 ];
 const POSE = POSES[+(Q.get('pose') || 0)];
+const f = x => x.toFixed(3);
 const FS=`#version 300 es
 precision highp float;
 in vec2 v;out vec4 o;
 uniform vec2 px;
 #define AA ${AA}
-const float YAW=${POSE.yaw.toFixed(3)},PIT=${POSE.nod.toFixed(3)},TILT=${POSE.tilt.toFixed(3)},EARS=${POSE.ears.toFixed(3)},SHUT=${POSE.shut.toFixed(3)},WIN=1.92,CUTV=.0625,CUTY=-.74;   // CUTV is a whole pixel row at any multiple of 16
-const vec2 CEN=vec2(.10,CUTY+(.5-CUTV)*WIN);
-const vec3 H=vec3(0);
-const vec3 EAR=vec3(.285,.432,-.225);
-const float LONG=1.12;                                              // how much longer than the first draft the muzzle is
-vec3 snout(vec3 q){if(q.z>.2)q.z=.2+(q.z-.2)/LONG;return q;}
-mat3 HR;vec3 EYE=vec3(.160,.176,.335);
+const float YAW=${f(POSE.yaw)},PIT=${f(POSE.nod)},TILT=${f(POSE.tilt)},EARS=${f(POSE.ears)},SPLAY=${f(POSE.splay)},SHUT=${f(POSE.shut)},WIDE=${f(POSE.wide)},MOUTH=${f(POSE.mouth)},SQ=${f(POSE.squash)},TONGUE=${f(POSE.tongue)},LOOK=${f(POSE.look)};
+const float WIN=2.5;const vec2 CEN=vec2(-.06,.16);
+const vec3 H=vec3(0),SQV=vec3(1./sqrt(SQ),SQ,1./sqrt(SQ));          // squash keeps the volume
+const vec3 EAR=vec3(.27,.44,-.20);
+const vec3 EYE=vec3(.185,.172,.300),EN=vec3(.60,.20,.77);             // the eye's centre and facing, on the dog's left
+const vec3 HINGE=vec3(0,-.075,.18);                                 // where the lower jaw hinges
+mat3 HR,HN;
 float m=0.;
 float sm(float a,float b,float k){k*=1.5;float h=max(k-abs(a-b),0.)/k;return min(a,b)-h*h*h*k/6.;} // cubic: C2, so no crease at the blend's edge
 float ell(vec3 p,vec3 c,vec3 r){p-=c;float a=length(p/r),b=length(p/(r*r));return a*(a-1.)/b;}
@@ -54,67 +56,124 @@ float rc(vec3 p,vec3 a,vec3 b,float r1,float r2){ // exact round cone
   if(sign(y)*a2*y2<k)return sqrt(x2+y2)*il2-r1;
   return (sqrt(x2*a2*il2)+y*rr)*il2-r1;}
 float ves(vec2 p,float r,float d){p=abs(p);float b=sqrt(r*r-d*d);return ((p.y-b)*d>p.x*b)?length(p-vec2(0,b)):length(p-vec2(-d,0))-r;} // exact gothic arch, tips on y
+float alm(vec2 e,float a,float b){float r=(a*a+b*b)/(2.*b);return ves(e.yx,r,r-b);}   // almond, a long and b high, tips on x
+float seg(vec2 p,vec2 a,vec2 b){vec2 pa=p-a,ba=b-a;return length(pa-ba*clamp(dot(pa,ba)/dot(ba,ba),0.,1.));}
 mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,s,-s,c);}
-vec3 earq(vec3 s){vec3 q=s-EAR;q.xy=rot(.235)*q.xy;q.xz=rot(-.34)*q.xz;q.yz=rot(.10+EARS)*q.yz;return q;}
-float eart(vec3 q){return ves(q.xy,.50,.335)-.05;}                    // the ear's outline: wide base, soft tip
-vec3 cup(vec3 q){float x=clamp(q.x,-.28,.28);q.z-=.75*x*x;return q;}  // cupped; clamped, so the shear never stretches space past 1.09
+// ears: tall, pointed, set high, cupped
+vec3 earq(vec3 s){vec3 q=s-EAR;q.xy=rot(.20+SPLAY)*q.xy;q.xz=rot(-.30)*q.xz;q.yz=rot(.08+EARS)*q.yz;return q;}
+float eart(vec3 q){return ves(q.xy-vec2(0,.02),.52,.35)-.05;}
+vec3 cup(vec3 q){float x=clamp(q.x,-.28,.28);q.z-=.75*x*x;return q;}  // clamped, so the shear never stretches space past 1.09
 float ear(vec3 s){vec3 q=cup(earq(s));
-  float e=eart(q),R=.042;return (length(vec2(max(e+R,0.),q.z))-R)/1.09;}
-float head(vec3 q){
-  float d=ell(q,vec3(0,.10,-.03),vec3(.43,.365,.44));
-  d=sm(d,rc(q,vec3(0,.04,.16),vec3(0,-.085,.82),.235,.138),.2);       // the long muzzle, tapering out of the cheeks
-  vec3 j=q-vec3(0,-.145,.38);j.yz=rot(-.14)*j.yz;                     // the jaw: an ellipsoid, because a round cone's cap ring shows as a crease
-  d=sm(d,ell(j,vec3(0),vec3(.165,.125,.47)),.12);
+  float e=eart(q),R=.044;return (length(vec2(max(e+R,0.),q.z))-R)/1.09;}
+// the lower jaw turns about its hinge; j is a point in the jaw's own space
+vec3 jawq(vec3 q){vec3 j=q-HINGE;j.yz=rot(-MOUTH)*j.yz;return j+HINGE;}
+float yl(float z){float k=smoothstep(.60,.30,z);return -.118+.075*k*k;}   // the lip line, which rises to a smile at the corner
+float smax(float a,float b,float k){return -sm(-a,-b,k);}
+float rcu(vec3 q){vec3 w=q;w.x*=1.06;return rc(w,vec3(0,.04,.20),vec3(0,.0,.74),.245,.118)/1.06;}     // the muzzle: a long wedge
+float rcl(vec3 j){vec3 w=j;w.x*=1.15;return rc(w,vec3(0,-.135,.20),vec3(0,-.112,.64),.135,.068)/1.15;}
+float upper(vec3 q){return smax(rcu(q),(yl(q.z)-q.y)/1.1,.015);}     // the jaws meet on the lip line, so they part cleanly
+float lower(vec3 j){return smax(rcl(j),(j.y-yl(j.z))/1.1,.015);}
+float cavity(vec3 q,vec3 j){                                        // the inside of the mouth, between the jaws when it opens
+  return max(max(q.y-yl(q.z),yl(j.z)-j.y)/1.1-.004,max(min(rcu(q),rcl(j))+.016,abs(q.x)-.08));}
+float tongue(vec3 j){vec3 t=j-vec3(0,-.104,.46-.16*(1.-TONGUE));t.y+=1.5*max(t.z-.12,0.)*max(t.z-.12,0.);   // lies on the jaw and curls down past its tip
+  return ell(t,vec3(0),vec3(.085,.028,.27));}
+float skull(vec3 q){vec3 s=vec3(abs(q.x),q.yz);
+  float d=ell(q,vec3(0,.13,-.07),vec3(.435,.40,.43));              // the crown
+  d=sm(d,ell(s,vec3(.21,-.07,-.02),vec3(.24,.22,.26)),.12);           // full cheeks
+  d=sm(d,ell(q,vec3(0,.26,.12),vec3(.28,.21,.25)),.10);             // the forehead, which rises from the muzzle at the stop
+  d=sm(d,ell(s,vec3(.14,.225,.24),vec3(.125,.075,.115)),.06);        // the brow, over each eye
   return d;}
-float nose(vec3 q){float d=ell(q,vec3(0,-.012,.945),vec3(.094,.064,.07));return sm(d,ell(q,vec3(0,-.058,.93),vec3(.05,.04,.05)),.04);}
-float neck(vec3 p){float d=sm(rc(p,vec3(.08,-.04,-.31),vec3(.17,-.85,-.26),.40,.50),ell(p,vec3(.18,-1.0,-.18),vec3(.70,.66,.54)),.25);
-  d=sm(d,ell(p,vec3(.14,-.27,-.24),vec3(.56,.34,.46)),.22);         // a thick ruff, not a slim neck
-  return sm(d,rc(p,vec3(.17,-.42,-.22),vec3(.17,-1.1,-.22),.555,.60),.16);}   // the shoulders run straight down to the cut
+float head(vec3 q,vec3 j,vec3 r){
+  float d=skull(q);
+  d=sm(d,upper(q),.075);                                          // a short blend: the stop
+  d=sm(d,lower(j),.07);
+  d=sm(d,ell(r,vec3(0,-.17,-.04),vec3(.17,.11,.17)),.15);           // the throat grows from the neck, so it doesn't nod with the head
+  return d;}
+float nose(vec3 q){float d=ell(q,vec3(0,.028,.785),vec3(.118,.082,.085));return sm(d,ell(q,vec3(0,-.032,.768),vec3(.058,.046,.05)),.04);}
+vec3 local(vec3 p){return ((p-H)/SQV)*HR;}
 float map(vec3 p){
-  vec3 u=(p-H)*HR,q=snout(u),s=vec3(abs(u.x),u.yz);
-  float d=sm(head(q)/1.09,ear(s),.09);
-  d=sm(d,-sm(-neck(p),-ell(p,vec3(.13,-.12,-.16),vec3(.62,.56,.68)),.12),.09);m=0.;   // the chest closes in a soft curve, so it can sit anywhere
+  vec3 q=local(p),j=jawq(q),s=vec3(abs(q.x),q.yz);float k=min(min(SQV.x,SQV.y),1.);
+  float d=sm(head(q,j,((p-H)/SQV)*HN)/1.09,ear(s),.09);m=0.;
+  if(MOUTH>0.){float c=cavity(q,j);if(c<d){d=c;m=2.;}
+    float t=tongue(j)/1.12;if(t<d){d=t;m=3.;}}
   float n=nose(q)/1.09;if(n<d){d=n;m=1.;}
-  return d;}
+  return d*k;}
 vec3 nor(vec3 p){vec2 e=vec2(.0012,0);return normalize(vec3(map(p+e.xyy)-map(p-e.xyy),map(p+e.yxy)-map(p-e.yxy),map(p+e.yyx)-map(p-e.yyx)));}
 float ao(vec3 p,vec3 n){float a=0.,w=1.;for(int i=1;i<6;i++){float h=.04*float(i)*float(i)*.5;float x=max(0.,h-map(p+n*h))/h;a+=w*x*x/(x+.25);w*=.7;}return clamp(1.-a*.42,0.,1.);} // smooth onset, no band where a neighbour enters range
 float sh(vec3 p,vec3 l){float r=1.,t=.03;for(int i=0;i<36&&t<2.2;i++){float h=map(p+l*t);r=min(r,6.*h/t);t+=clamp(h*.8,.012,.2);if(r<.01)break;}r=clamp(r,0.,1.);return r*r*(3.-2.*r);}
+vec3 world(vec3 u){return H+SQV*(HR*u);}
 vec4 shade(vec2 uv){
-  if(uv.y<CUTV)return vec4(0);
   vec3 ro=vec3(CEN+(uv-.5)*WIN,3.5),rd=vec3(0,0,-1);
   float t=0.,d=1.;bool hit=false;for(int i=0;i<320;i++){d=map(ro+rd*t);if(d<.0004){hit=true;break;}t+=max(d*.8,.0003);if(t>7.)break;}
   if(!hit&&!(t<7.&&d<.004))return vec4(0);                      // a grazing ray that runs out of steps is still on the surface
   vec3 p=ro+rd*t;float id=m;vec3 n=nor(p);
-  vec3 u=(p-H)*HR,q=snout(u),s=vec3(abs(u.x),u.yz);
+  vec3 q=local(p),j=jawq(q),s=vec3(abs(q.x),q.yz);
   vec3 L=normalize(vec3(-.30,.80,.62));
-  float em=smoothstep(.03,.0,ear(s)),am=mix(ao(p,n),1.,.7*em),sd=mix(.82,1.,sh(p+n*.012,L));
+  float em=smoothstep(.03,.0,ear(s)),am=mix(ao(p,n),1.,.7*em),sd=mix(.80,1.,sh(p+n*.012,L));
   float up=n.y*.5+.5,vz=clamp(n.z,0.,1.),wr=clamp(dot(n,L)*.62+.38,0.,1.);
-  vec3 c=vec3(1.,.995,.98);
-  // inner ear, painted
-  vec3 qe=cup(earq(s));float e2=eart(qe);
-  float inr=smoothstep(-.058,-.088,e2)*step(0.,qe.z+.01)*smoothstep(.0,.09,head(q))*step(ear(s),.012);
-  c=mix(c,mix(vec3(.985,.875,.855),vec3(.90,.70,.70),smoothstep(.30,.0,qe.y)),inr);
-  vec3 lit=c*(mix(vec3(.62,.625,.68),vec3(.80,.80,.81),up)*am+vec3(1.,.985,.96)*.34*wr*sd);
-  lit*=mix(vec3(.70,.705,.755),vec3(1.),smoothstep(.0,.5,vz));
-  lit*=mix(vec3(.95,.95,1.),vec3(1.),am);
-  lit*=mix(vec3(.93,.935,.955),vec3(1.),smoothstep(CUTY,CUTY+.36,p.y));
+  vec3 c=vec3(1.,.995,.985),lit;
   if(id<.5){
-    // eye: a dark almond decal with a crisp catchlight
-    vec3 N=normalize(vec3(.28,.20,.94)),T=normalize(vec3(N.z,0,-N.x)),B=cross(N,T),r=vec3(abs(q.x),q.yz)-EYE;
-    vec2 e=rot(-.20)*vec2(dot(r,T),dot(r,B));if(q.x<0.)e.x*=.80;e.y/=max(1.-SHUT,.12);
-    float ed=ves(e.yx,.068,.012)-.006;
-    if(q.z>.1&&dot(n,N)>.15){
-      float bw=exp(-pow((e.x+.012)/.08,2.)-pow((e.y-.074)/.028,2.));lit*=mix(vec3(1.),vec3(.89,.89,.93),bw);
-      lit=mix(lit,vec3(.33,.30,.31),smoothstep(.014,.0,ed)*.5);
-      vec3 ey=mix(vec3(.17,.09,.05),vec3(.03,.022,.02),smoothstep(-.05,.03,e.y));
-      float aw=fwidth(ed)*.0+.0025;
-      vec3 ew=H+HR*vec3(sign(q.x)*EYE.x,EYE.y,.2+(EYE.z-.2)*LONG);
-      ey=mix(ey,vec3(1.),smoothstep(.0112,.0088,length(p.xy-ew.xy-vec2(-.015,.014))));
-      lit=mix(lit,ey,smoothstep(aw,-aw,ed));
+    // inner ear, painted
+    vec3 qe=cup(earq(s));float e2=eart(qe);
+    float inr=smoothstep(-.06,-.095,e2)*step(0.,qe.z+.01)*smoothstep(.0,.09,skull(q))*step(ear(s),.012);
+    c=mix(c,mix(vec3(.99,.89,.87),vec3(.93,.72,.72),smoothstep(.32,.0,qe.y)),inr);
+  }
+  lit=c*(mix(vec3(.66,.67,.73),vec3(.84,.84,.85),up)*am+vec3(1.,.985,.96)*.31*wr*sd);
+  lit*=mix(vec3(.95,.95,1.),vec3(1.),am);
+  // the silhouette: a warm grey edge all round, lit side too, so white holds on white paper
+  lit=min(lit,vec3(1.))*mix(vec3(.75,.73,.70),vec3(1.),smoothstep(.0,.55,vz));
+  if(id<.5){
+    vec3 qe=cup(earq(s));                                            // the ears are thin, so their rim gets the same edge in their own plane
+    lit*=mix(vec3(1.),vec3(.82,.80,.77),max(smoothstep(-.034,-.004,eart(qe)),smoothstep(.85,.3,vz))*em);
+    float side=sign(q.x);
+    // lips: black along the mouth's seam, which opens with the jaw
+    float lip=max(smoothstep(.0085,.0045,abs(q.y-yl(q.z))),smoothstep(.0085,.0045,abs(j.y-yl(j.z))))*smoothstep(.27,.33,q.z)*step(.05,s.x+step(.55,q.z));
+    if(MOUTH>0.)lip*=smoothstep(.05,.025,cavity(q,j));               // open, the lips only line the mouth
+    float ph=smoothstep(.011,.006,abs(q.x))*smoothstep(-.03,-.055,q.y)*step(yl(q.z),q.y)*smoothstep(.66,.74,q.z);  // the line under the nose
+    lit=mix(lit,vec3(.07,.065,.07),max(lip,ph));
+    // eye: an almond with a black rim, a warm brown iris and a big catchlight
+    vec3 N=normalize(EN),T=normalize(vec3(N.z,0,-N.x)),B=cross(N,T),r=s-EYE;
+    vec2 e=rot(-.24)*vec2(dot(r,T),dot(r,B));
+    float a=.101+.008*WIDE,b=.063+.016*WIDE;
+    vec3 nW=normalize(SQV*(HR*vec3(side*N.x,N.yz)));                // which way this eye faces, in the world
+    if(q.z>.15&&dot(r,N)>-.09&&nW.z>.45){                           // the far eye is left out once it turns away, so no speck at the bridge
+      vec3 ew=world(vec3(side*EYE.x,EYE.yz));
+      if(SHUT>.5){                                                   // squeezed shut: a chevron, its point toward the nose
+        float sd2=min(seg(e,vec2(-.06,.0),vec2(.075,.044)),seg(e,vec2(-.06,.0),vec2(.075,-.036)))-.0135;
+        lit*=mix(1.,.88,smoothstep(.05,.0,sd2));
+        lit=mix(lit,vec3(.06,.055,.06),smoothstep(.003,-.003,sd2));
+      }else{
+        float ed=alm(e,a,b)-.004;
+        lit*=mix(1.,.86,smoothstep(.05,.0,ed));                      // a soft socket round the eye
+        vec2 ic=vec2(-.004-.4*LOOK,.004+LOOK),ie=e-ic;float ir=length(ie)/(.060+.004*WIDE);
+        vec3 iris=mix(vec3(.62,.37,.16),vec3(.30,.15,.06),smoothstep(-.05,.05,ie.y));
+        iris=mix(iris,vec3(.035,.025,.02),smoothstep(.56,.50,ir));  // pupil
+        iris=mix(iris,vec3(.12,.07,.04),smoothstep(.92,1.,ir));       // a dark limbal ring
+        vec3 white=mix(vec3(.10,.065,.045),vec3(.97,.965,.96),WIDE);  // dogs show dark corners; wide eyes show their whites
+        vec3 ey=mix(iris,white,smoothstep(.98,1.04,ir));
+        ey*=mix(.55,1.,smoothstep(b*.95,b*.15,e.y));                  // the upper lid's shadow
+        vec2 cl=p.xy-ew.xy;float ss=SQV.x;
+        ey=mix(ey,vec3(1.),smoothstep(.0215,.0185,length(cl-vec2(-.020,.022)*ss)));
+        ey=mix(ey,vec3(1.),.75*smoothstep(.0095,.0075,length(cl-vec2(.022,-.018)*ss)));
+        float rim=smoothstep(.0035,-.0035,ed-.017);                  // the black rim
+        float in2=smoothstep(.0035,-.0035,ed);
+        lit=mix(lit,vec3(.05,.045,.05),rim);
+        lit=mix(lit,ey,in2);
+      }
     }
+  }else if(id<1.5){
+    vec3 r=reflect(rd,n);
+    vec2 nn=rot(.5)*(vec2(abs(q.x),q.y)-vec2(.050,-.002));
+    float ns=smoothstep(1.15,.8,length(nn/vec2(.027,.014)))*smoothstep(.80,.84,q.z);   // the nostrils, painted: matte and darker
+    lit=vec3(.04,.038,.042)+.16*smoothstep(-.1,.9,dot(n,L))*vec3(.8,.82,.9)+(1.-ns)*(.20*pow(clamp(dot(r,L),0.,1.),9.)+.8*pow(clamp(dot(r,L),0.,1.),70.));
+    lit*=1.-.75*ns;
+  }else if(id<2.5){
+    lit=mix(vec3(.30,.08,.09),vec3(.16,.04,.05),smoothstep(.75,.35,q.z))*(.6+.4*am);
   }else{
     vec3 r=reflect(rd,n);
-    lit=vec3(.04,.038,.042)+.16*smoothstep(-.1,.9,dot(n,L))*vec3(.8,.82,.9)+.20*pow(clamp(dot(r,L),0.,1.),9.)+.8*pow(clamp(dot(r,L),0.,1.),70.);
+    vec3 pink=mix(vec3(.96,.50,.55),vec3(.86,.38,.45),smoothstep(-.075,-.155,j.y));   // deeper where it hangs
+    pink*=mix(.82,1.,smoothstep(.0,.014,abs(j.x)));                  // a groove down its middle
+    lit=pink*(mix(vec3(.62,.6,.62),vec3(.92,.9,.9),up)*am+.30*wr*sd)+.35*pow(clamp(dot(r,L),0.,1.),24.);
   }
   return vec4(min(lit,vec3(1.)),1.);
 }
@@ -123,6 +182,7 @@ void main(){
   float a=YAW,c=PIT;vec3 F=vec3(-sin(a),0,cos(a)),R=vec3(cos(a),0,sin(a)),U=vec3(0,1,0);
   vec3 V=U*cos(c)+F*sin(c),W=F*cos(c)-U*sin(c);
   HR=mat3(R*cos(TILT)+V*sin(TILT),V*cos(TILT)-R*sin(TILT),W);
+  HN=mat3(R*cos(TILT)+U*sin(TILT),U*cos(TILT)-R*sin(TILT),F);      // the neck turns and tilts with the head, but doesn't nod
   vec3 acc=vec3(0);float al=0.;
   for(int j=0;j<AA;j++)for(int i=0;i<AA;i++){vec4 c=shade(v+px*((vec2(i,j)+.5)/float(AA)-.5));acc+=c.rgb*c.a;al+=c.a;}
   o=al>0.?vec4(acc/al,al/float(AA*AA)):vec4(0);

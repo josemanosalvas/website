@@ -7,8 +7,10 @@ and minifies the result into index.html, the one file that gets uploaded.
 
 Every trim here was checked against screenshots of the unminified page with
 Mitad's original fonts: 41 renders, pixel-identical. Narrowing a variable axis
-away from its default re-rounds outlines and moves edge pixels, so only
-Literata's weight, which the page uses at its default (400), is pinned.
+away from its default re-rounds outlines and moves edge pixels, so the only
+axes pinned are Literata's: its weight at the default (400) for the email, and
+for the word's italic letters a static cut at 800 and display size, which only
+the animation draws.
 
     pip install fonttools brotli minify-html     # and Node, for npx esbuild
     python3 tools/build.py [path/to/design-system/fonts]
@@ -50,12 +52,12 @@ FONTS = [
         "text": "hello@josemanosalvas.ch",  # email
     },
     {
-        # The word's italic letters, pinned to Literata's display size: a static cut, so the
-        # page and a canvas measuring it draw the very same letter.
+        # The word's italic letters, pinned to Literata's display size and to the word's own
+        # weight: a static cut, so the page and a canvas measuring it draw the very same letter.
         "family": "Literata Display",
         "file": "literata-italic-var.woff2",
-        "pin": {"wght": 400, "opsz": 72},
-        "weight": "400",
+        "pin": {"wght": 800, "opsz": 72},
+        "weight": "800",
         "style": "italic",
         "text": "Háä",  # letters on their way
     },
