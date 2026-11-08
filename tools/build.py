@@ -2,13 +2,15 @@
 """Build index.html from src/index.html.
 
 Subsets Mitad's fonts to the characters on the page, embeds them as base64
-between the /* fonts:start */ and /* fonts:end */ markers, and minifies the
-result into index.html, the one file that gets uploaded.
+between the /* fonts:start */ and /* fonts:end */ markers, embeds the shepherd,
+and minifies the result into index.html, the one file that gets uploaded.
 
 Every trim here was checked against screenshots of the unminified page with
 Mitad's original fonts: 41 renders, pixel-identical. Narrowing a variable axis
-away from its default re-rounds outlines and moves edge pixels, so only
-Literata's weight, which the page uses at its default (400), is pinned.
+away from its default re-rounds outlines and moves edge pixels, so the only
+axes pinned are Literata's: its weight at the default (400) for the email, and
+for the word's italic letters a static cut at 800 and display size, which only
+the animation draws.
 
     pip install fonttools brotli minify-html     # and Node, for npx esbuild
     python3 tools/build.py [path/to/design-system/fonts]
@@ -39,7 +41,7 @@ FONTS = [
         "pin": None,
         "weight": "100 900",
         "style": "normal",
-        "text": "Hola, I’m José.",  # greeting, name, hidden heading
+        "text": "Hola Salü, I’m José. ñ+",  # greetings, name, hidden heading, signs
     },
     {
         "family": "Literata",
@@ -47,7 +49,17 @@ FONTS = [
         "pin": {"wght": 400},
         "weight": "400",
         "style": "italic",
-        "text": "hello@josemanosalvas.ch",
+        "text": "hello@josemanosalvas.ch",  # email
+    },
+    {
+        # The word's italic letters, pinned to Literata's display size and to the word's own
+        # weight: a static cut, so the page and a canvas measuring it draw the very same letter.
+        "family": "Literata Display",
+        "file": "literata-italic-var.woff2",
+        "pin": {"wght": 800, "opsz": 72},
+        "weight": "800",
+        "style": "italic",
+        "text": "Háä",  # letters on their way
     },
     {
         "family": "B612 Mono",
@@ -56,6 +68,14 @@ FONTS = [
         "weight": "400",
         "style": "normal",
         "text": "GITHUB",  # uppercased in CSS
+    },
+    {
+        "family": "B612 Mono",
+        "file": "b612mono-700.woff2",
+        "pin": None,
+        "weight": "700",
+        "style": "normal",
+        "text": "óöé",  # letters on their way
     },
 ]
 
@@ -77,6 +97,12 @@ def font_face(font):
     sub = subset.Subsetter(opts)
     sub.populate(text=font["text"])
     sub.subset(tt)
+    # Safari ignores the override descriptors in the @font-face below, so the font carries
+    # the same numbers. The word's baseline, and everything drawn on it, depends on them.
+    upm = tt["head"].unitsPerEm
+    tt["hhea"].ascent = tt["OS/2"].sTypoAscender = round(.8 * upm)
+    tt["hhea"].descent = tt["OS/2"].sTypoDescender = -round(.2 * upm)
+    tt["hhea"].lineGap = tt["OS/2"].sTypoLineGap = 0
     buf = io.BytesIO()
     tt.flavor = "woff2"
     tt.recalcTimestamp = False        # same input, same bytes
@@ -111,6 +137,8 @@ def main():
     if not marker.search(html):
         sys.exit("src/index.html has no /* fonts:start */ … /* fonts:end */ markers")
     html = marker.sub(lambda _: "\n".join(faces), html)
+    dog = base64.b64encode((ROOT / "src" / "shepherd.avif").read_bytes()).decode()
+    html = html.replace("shepherd.avif", f"data:image/avif;base64,{dog}")
     html = re.sub(r"(?s)<script>(.*?)</script>", lambda m: f"<script>{minify_js(m[1])}</script>", html)
     out = minify_html.minify(html, minify_css=True)
     (ROOT / "index.html").write_text(out, encoding="utf-8")
