@@ -120,7 +120,7 @@
   .word .m { font: 700 .9em/1 var(--mono); letter-spacing: 0; }
   .word.live > .i { top: .051em; }
   .word.live > .m { top: .089em; }
-  .word .x { -webkit-text-stroke: .047em currentColor; }   /* the Swiss cross, at the word's own stem weight */
+  .word .x { -webkit-text-stroke: .047em currentColor; translate: 0 -.0235em; }   /* the Swiss cross, at the word's own stem weight, its foot on the baseline */
 
   /* A second l in the l's slot, which rises out of the first as the flagpole: the l is a
      plain rectangle, so the two overlap with no seam. */
@@ -322,7 +322,7 @@ void main(){v=p;vec2 d=mat2(cos(R),sin(R),-sin(R),cos(R))*((p-.5)*Q.zw),c=(Q.xy+
     // so the light travels; its slope comes from its height, in the alpha channel. Then the
     // letter itself, in ink K, appears behind it, G of the way in, and a front runs along the
     // letter's strokes, F of the way: behind it the model is gone, and just behind it the tube
-    // is a fading wireframe, rings across the stroke and lines along it, B being its radius.
+    // is a fading wireframe, B rings across the stroke and lines along it every 30° around it.
     const liquidShader = `#version 300 es
 precision highp float;
 uniform sampler2D T;uniform float P,M,F,B,G;uniform vec2 L;uniform vec3 I[3],K;in vec2 v;out vec4 o;
@@ -336,10 +336,10 @@ vec3 c=mix(I[0],I[1],smoothstep(-.55,.75,y));c=mix(c,I[0]*1.8,smoothstep(0.,.9,-
 c=mix(c,I[2],pow(1.-n.z,2.6)*.85);c+=1.1*l(r,vec3(-.32,-.42,.85),110.)+.18*l(r,vec3(-.32,-.42,.85),10.)+.45*l(r,vec3(.75,-.1,.5),40.)+.5*l(r,vec3(.1,-.75,.6),70.);
 float d=max(dot(n,normalize(vec3(-.35,-.55,.76))),0.);vec3 p=mix(I[1],vec3(1),.55),m=p*(.64+.44*d)+.1*l(r,vec3(-.32,-.42,.85),9.);
 c=mix(mix(m,p*.8,pow(1.-n.z,2.)*.3),min(c,vec3(1)),M);
-float s=t.b,e=fwidth(s)+.002,b=.3,h=acos(clamp(1.-(t.g-.5)/B,-1.,1.));
-vec3 f=mix(vec3(.93,.93,.94)*(.8+.22*d),vec3(.42,.42,.46),max(grid(s*24.),grid(h*5.73))*.9)*mix(.74,1.,smoothstep(0.,.7,n.z));
+float s=t.b,e=fwidth(s)+.002,b=.3,h=acos(normalize(vec3(g,1.)).z);
+vec3 f=mix(vec3(.93,.93,.94)*(.8+.22*d),vec3(.42,.42,.46),max(grid(s*B),grid(h*1.9))*.9)*mix(.74,1.,smoothstep(0.,.7,n.z));
 float on=smoothstep(F-e,F+e,s),wire=smoothstep(F-b,F-b*.35,s)*(1.-on),at=cover(t.g)*(on+wire),ai=cover(t.r)*G;
-c=(on*(c+.3*exp(-pow((s-F)/.01,2.)))+wire*f)/max(on+wire,1e-4);
+c=(on*c+wire*f)/max(on+wire,1e-4);
 o=vec4(min(c,vec3(1))*at+K*ai*(1.-at),at+ai*(1.-at));}`;
 
     // An emoji, or a flag: A is the height of its wave, and U how much of it is out of the
@@ -379,7 +379,7 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
     // cylinder as wide as the letter's heaviest stroke, so one highlight runs unbroken along
     // each stroke and the rim lights all the way round. The outline is the font's own, from the
     // distance to its edge, so it stays sharp at any size. Stored as outline and slope.
-    function inflate(letter) {
+    async function inflate(letter) {
       const N = 256, c = document.createElement('canvas');
       c.width = c.height = N;
       const x = c.getContext('2d', { willReadFrequently: true });
@@ -408,6 +408,7 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
         return g;
       };
       const inside = distance((i) => ink[i] >= .5), outside = distance((i) => ink[i] < .5);
+      await breath();
       // Signed distance to the edge, in pixels, with the edge pixels' own coverage for the last half pixel.
       const edge = ink.map((q, i) => (q > 0 && q < 1 ? q - .5 : q >= .5 ? Math.sqrt(inside[i]) - .5 : .5 - Math.sqrt(outside[i])));
       const pass = (from, r, step) => {
@@ -424,14 +425,17 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
       let R = 1;
       for (const e of outline) R = Math.max(R, e);
       // The model is a rounded copy of the letter: the letter opened by a disc of three fifths of
-      // its heaviest half stroke, so stems end in round caps and terminals round off while every
-      // stroke keeps its width. Its outline is the distance to the letter shrunk by that disc.
-      const r = R * .6, core = distance((i) => !(edge[i] > r)), round = blur(core.map((d) => r - Math.sqrt(d)), 1);
+      // its heaviest half stroke, then softened, so stems end in round caps and terminals round
+      // off while every stroke keeps its width. Its outline is the distance to the letter shrunk
+      // by that disc.
+      await breath();
+      const r = R * .6, core = distance((i) => !(edge[i] > r)), round = blur(blur(core.map((d) => r - Math.sqrt(d)), 4), 1);
       // It's a balloon blown into that shape: the steady pressure against its outline, Poisson's
       // equation solved by over-relaxation. Its square root makes every stroke a round tube as
       // wide as the stroke, with nothing to crease.
       const p = new Float32Array(N * N);
       for (let k = 0; k < 160; k++) {
+        if (k % 32 === 0) await breath();
         for (let y = 1; y < N - 1; y++) {
           for (let i = y * N + 1 + ((y + k) & 1); i < y * N + N - 1; i += 2) {
             if (round[i] > 0) p[i] += 1.9 * ((p[i - 1] + p[i + 1] + p[i - N] + p[i + N] + 2) / 4 - p[i]);
@@ -440,33 +444,33 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
       }
       const z = blur(p.map((q) => Math.sqrt(Math.max(q, 0))), 1);
       // How far along its own strokes each point of the letter is from where the pen would start,
-      // its lowest leftmost point: the path the model is un-built along, as Dijkstra's walk
-      // through the letter, 0 at the start and 1 at the far end.
-      const along = new Float64Array(N * N).fill(Infinity), heap = [];
-      let seed = 0;
-      for (let i = 0; i < N * N; i++) if (ink[i] >= .5 && (i / N | 0) - i % N > (seed / N | 0) - seed % N) seed = i;
+      // the model's lowest leftmost point: the path the model is un-built along, as Dijkstra's
+      // walk through the letter, 0 at the start and 1 at the far end, smoothed so it crosses each
+      // stroke squarely.
+      await breath();
+      const along = new Float64Array(N * N).fill(Infinity), keys = new Float64Array(N * N * 2), ids = new Int32Array(N * N * 2);
+      let seed = 0, size = 0;
+      for (let i = 0; i < N * N; i++) if (ink[i] >= .5 && round[i] > 0 && (i / N | 0) - i % N > (seed / N | 0) - seed % N) seed = i;
       const push = (d, i) => {
-        heap.push([d, i]);
-        for (let k = heap.length - 1; k > 0;) { const up = (k - 1) >> 1; if (heap[up][0] <= heap[k][0]) break; [heap[up], heap[k]] = [heap[k], heap[up]]; k = up; }
+        let k = size++;
+        for (; k > 0; k = (k - 1) >> 1) { const up = (k - 1) >> 1; if (keys[up] <= d) break; keys[k] = keys[up]; ids[k] = ids[up]; }
+        keys[k] = d; ids[k] = i;
       };
       const pop = () => {
-        const top = heap[0], end = heap.pop();
-        if (heap.length) {
-          heap[0] = end;
-          for (let k = 0; ;) {
-            let m = k; const l = 2 * k + 1, r = l + 1;
-            if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
-            if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
-            if (m === k) break;
-            [heap[m], heap[k]] = [heap[k], heap[m]]; k = m;
-          }
+        const top = ids[0], d = keys[--size], i = ids[size];
+        let k = 0;
+        for (let c = 1; c < size; c = 2 * k + 1) {
+          if (c + 1 < size && keys[c + 1] < keys[c]) c++;
+          if (keys[c] >= d) break;
+          keys[k] = keys[c]; ids[k] = ids[c]; k = c;
         }
+        keys[k] = d; ids[k] = i;
         return top;
       };
       along[seed] = 0; push(0, seed);
       let far = 1;
-      while (heap.length) {
-        const [d, i] = pop();
+      while (size) {
+        const d = keys[0], i = pop();
         if (d > along[i]) continue;
         far = Math.max(far, d);
         for (const [dx, dy, w] of [[1, 0, 1], [-1, 0, 1], [0, 1, 1], [0, -1, 1], [1, 1, 1.414], [1, -1, 1.414], [-1, 1, 1.414], [-1, -1, 1.414]]) {
@@ -474,13 +478,14 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
           if (ink[j] >= .5 && d + w < along[j]) { along[j] = d + w; push(d + w, j); }
         }
       }
+      await breath();
       // Outside the letter, the nearest inside value, so the edge pixels blend cleanly.
-      const reach = blur(along.map((d) => (d < Infinity ? d / far : 0)), 1), weight = blur(along.map((d) => (d < Infinity ? 1 : 0)), 1);
+      const reach = blur(along.map((d) => (d < Infinity ? d / far : 0)), 3), weight = blur(along.map((d) => (d < Infinity ? 1 : 0)), 3);
       // Stored as the letter's outline, the model's outline, the way along, and the model's height.
       const field = new Float32Array(N * N * 4);
       for (let i = 0; i < N * N; i++) field.set([.5 + outline[i] / 8, .5 + round[i] / 8, weight[i] > 0 ? reach[i] / weight[i] : 1, z[i]], i * 4);
       return {
-        R: r / 8,                                     // the tube's radius, in the outline's units
+        rings: 3 * far / R,                           // rings along the letter, about as far apart as its lines around
         tex: texture(() => {
           gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, N, N, 0, gl.RGBA, gl.FLOAT, field);
           gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -576,7 +581,7 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       for (const g of greetings) {
         await breath();
-        g.letter = inflate(g.word[0]);
+        g.letter = await inflate(g.word[0]);
         await breath();
         const look = await art(g.mark);
         g.emoji = look.width && g.poses ? Array.from({ length: g.poses }, (_, k) => {
@@ -746,7 +751,10 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
         if (fixed === null) return ink(0) + w;
         return old0 ? from.x[0] - from.cells[0] / 2 + olds[0][2] + olds[0][0] : ink(0) + ends[0][0];
       };
-      let step = 0;                                   // how far the first letter has stepped aside, in em
+      // How far the first letter has stepped aside, in em: .1em, or less on a narrow window, so it
+      // always keeps 16 px from the window's edge.
+      let step = 0;
+      const stride = Math.max(0, Math.min(.1, (heading.getBoundingClientRect().left - 16) / em + ink(0) - .1));
       const where = (n) => {
         const [w, , fixed] = state[n];
         if (n === 0) return (fixed !== null ? fixed : ink(0) + w / 2) - step;
@@ -799,10 +807,10 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
         // baseline, and the first letter from the margin, so the left edge never moves. The
         // word comes to rest exactly where it rests at the start.
         while (shape.length && shape[0][0] <= t) { const [, n, w, move, fixed] = shape.shift(); state[n] = [w, move, fixed]; if (!n) old0 = false; }
-        step = .1 * out(span(t, aside.slice(0, 2))) * (1 - smooth(span(t, aside.slice(2))));
+        step = stride * out(span(t, aside.slice(0, 2))) * (1 - smooth(span(t, aside.slice(2))));
         const xs = [where(0), where(1), where(2), where(3)], ease = then === null ? 1 : 1 - Math.exp((then - t) / 3);
         then = t;
-        xs.forEach((x, n) => { eased[n] = n ? eased[n] + (x - eased[n]) * ease : x; shown[n] = t < last ? eased[n] : to.x[n]; });
+        xs.forEach((x, n) => { eased[n] = n && !(n === 1 && step) ? eased[n] + (x - eased[n]) * ease : x; shown[n] = t < last ? eased[n] : to.x[n]; });
         const pole = t < last ? spring(span(t, raise)) * (1 - drop(span(t, lower))) : 0;
         slots.forEach((el, n) => {
           // The landing letter pops; the second letter barely; the first, on the margin, not at all.
@@ -836,10 +844,11 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
             gl.uniform2f(liquid.L, mix(.22, -.3, smooth(span(t, coat))), mix(.12, -.06, smooth(span(t, coat))));
             gl.uniform3fv(liquid.I, [...hue.map((c) => c * .7), ...hue, ...hue.map((c) => mix(c, 1, .5))]);
             gl.uniform1f(liquid.M, t >= gloss ? 1 : 0);
-            gl.uniform1f(liquid.F, mix(-.02, 1.32, smooth(span(t, unbuild))));
-            gl.uniform1f(liquid.B, g.letter.R);
+            const front = mix(-.02, 1.32, smooth(span(t, unbuild)));
+            gl.uniform1f(liquid.F, front);
+            gl.uniform1f(liquid.B, g.letter.rings);
             gl.uniform3fv(liquid.K, dark);
-            gl.uniform1f(liquid.G, span(t, [unbuild[0], unbuild[0] + 4]));
+            gl.uniform1f(liquid.G, front > .03 ? 1 : 0);   // the ink letter cuts in as the un-build shows
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
           }
 
@@ -864,7 +873,7 @@ c.rgb*=1.+A*2.4*e*cos(s);o=c*step(0.,y)*step(y,1.)*step(x,1.)*step(E,v.x);}`;
             gl.uniform1f(cloth.U, 1);
             gl.uniform1f(cloth.A, 0);
             gl.uniform1f(cloth.W, 0);
-            gl.uniform1f(cloth.E, Math.max(0, ((post + side) * px - left) / w));
+            gl.uniform1f(cloth.E, Math.max(0, ((post + side) * px - D - left) / w));   // a pixel in, under the l's soft edge
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
           }
 
