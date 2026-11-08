@@ -35,11 +35,11 @@ The build is deterministic: the same source gives the same bytes.
 
 ## The greeting
 
-Only the greeting moves. A visit opens with two changes, to Salü and back to Hola, 3.8 s apart,
+Only the greeting moves. A visit opens with two changes, to Salü and back to Hola, 4 s apart,
 and then the word stays. Pointing at the word, or tapping it, plays one more. The `l` never changes and never moves: it's
 the third letter of both words, so the word never leaves.
 
-Each change takes about 2.4 s and runs fast and then slower, the way a thrown thing settles,
+Each change takes about 2.6 s and runs fast and then slower, the way a thrown thing settles,
 like the title of Apple's Mac mini page. First a burst of hard cuts, one letter at a time, two
 frames apart. The second letter passes through glyphs from its own language (ñ, á, ó on the way
 to Hola; the Swiss cross, ä, ö on the way to Salü) in the page's other two faces, at the word's
@@ -52,7 +52,8 @@ behind the `l`, brakes and takes the last letter's place for about a second, hop
 the Galápagos tortoise, or the white Swiss shepherd, which acts through four poses rendered
 from its 3D model, smiling, blinking and looking up at the pole. The second
 letter comes back with a halo in the word's colour. Then the `l` shoots up into a flagpole and
-flings the animal away, the last letter lands, and the flag unfurls from behind the pole. The
+flings the animal away, spinning half a turn as it shrinks into the distance. Once it has cleared
+the slot, the last letter lands and the flag unfurls from behind the pole. The
 halo fades, the flag goes back in, and the pole drops.
 
 What goes with each word is the `greetings` list at the foot of `src/index.html`, and all the
